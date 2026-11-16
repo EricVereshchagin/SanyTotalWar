@@ -1,0 +1,86 @@
+@using SanyTotalWar.Domain.Entities
+@using SanyTotalWar.Domain.Policies
+@using SanyTotalWar.Web.Services
+@inject UiState Ui
+@inject GameEngine Engine
+
+<div class="war-card @(War.IAmSide ? "mine" : "")">
+    <div class="war-card-head">
+        <span class="war-name">@War.Name</span>
+        <span class="war-timer">@TimerText</span>
+    </div>
+    <div class="war-meta">
+        Зона: @War.ZoneKm2.ToString("0.00") км² · @War.Sides.Count стороны
+        @if (War.IAmSide)
+        {
+            <text> · ваши войска: @War.MyMob</text>
+        }
+    </div>
+    <div class="war-sides">
+        @foreach (var s in War.Sides.OrderByDescending(x => x.C))
+        {
+            <div class="side-row @(s.Me ? "me" : "")">
+                <span class="side-dot" style="background:@s.Color"></span>
+                <span class="side-name">@s.Name</span>
+                <span class="side-mob">@s.Mob</span>
+                <span class="side-c" title="C = 0.5·H + 0.5·S(UC-12)">C=@s.C.ToString("0.00")</span>
+                <span class="side-bar"><span style="width:@(Math.Clamp(s.C * 100, 0, 100).ToString("0"))%"></span></span>
+            </div>
+        }
+    </div>
+    @if (War.IAmSide)
+    {
+        <div class="war-points">Очки контроля: @War.MyPoints / @War.PointsPossible (UC-10.5)</div>
+
+        <div class="war-actions">
+            <select @bind="ReinforceFrom">
+                <option value="">Откуда…</option>
+                @foreach (var o in Options)
+                {
+                    <option value="@o.TerritoryId">@o.Name (@o.Army @(o.Adjacent ? "· смежная" : o.HasAirport ? "· аэропорт" : "· далеко, нужен аэропорт"))</option>
+                }
+            </select>
+            <input type="number" min="1" step="1" @bind="ReinforceCount" placeholder="N" />
+            <button class="btn war" disabled="@(!CanReinforce)" @onclick="Reinforce">ПОДКРЕПЛЕНИЕ</button>
+            <button class="btn retreat" disabled="@(!CanRetreat)" @onclick="DoRetreat">ОТСТУПИТЬ @RetreatCount</button>
+        </div>
+        <div class="war-hint">
+            Отступление −50% войск (UC-09). Смежные территории — в радиусе 2.5 км (UC-08).
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public required WarVm War { get; set; }
+
+    private Guid ReinforceFrom { get; set; }
+    private int ReinforceCount { get; set; } = 50;
+    private int RetreatCount { get; set; } = 0;
+
+    private List<ReinforceOption> Options => Engine.ReinforceOptions(Ui.MeId, War.Id);
+
+    private bool CanReinforce =>
+        ReinforceFrom != Guid.Empty &&
+        Options.FirstOrDefault(o => o.TerritoryId == ReinforceFrom) is { } o &&
+        ReinforceCount > 0 && ReinforceCount <= o.Army;
+
+    private bool CanRetreat => War.MyMob > 0 && RetreatCount > 0 && RetreatCount <= War.MyMob;
+
+    private string TimerText => War.Ended
+        ? $"завершена · победа {War.WinnerName ?? "—"}"
+        : $"до конца: {(War.MinutesLeft / 60)} ч {(War.MinutesLeft % 60):00} м";
+
+    private void Reinforce()
+    {
+        var events = Engine.SendReinforcements(Ui.MeId, War.Id, ReinforceFrom, ReinforceCount);
+        Ui.PushToasts(events);
+    }
+
+    private void DoRetreat()
+    {
+        var count = RetreatCount <= 0 ? War.MyMob : RetreatCount;
+        var events = Engine.Retreat(Ui.MeId, War.Id, count);
+        Ui.PushToasts(events);
+        RetreatCount = 0;
+    }
+}

@@ -1,0 +1,19 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+artifacts/
+
+## Rider / VS
+.idea/
+.vs/
+*.DotSettings.user
+
+## OS
+Thumbs.db
+.DS_Store
+
+## Tooling
+*.log
+TestResults/
