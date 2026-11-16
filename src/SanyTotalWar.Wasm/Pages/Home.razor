@@ -1,0 +1,257 @@
+﻿@page "/"
+@using SanyTotalWar.Application
+@using SanyTotalWar.Application.Abstractions
+@using SanyTotalWar.Domain
+@using SanyTotalWar.Domain.Common
+@using SanyTotalWar.Domain.Entities
+@using SanyTotalWar.Domain.Policies
+@using SanyTotalWar.Wasm.Services
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject GameEngine Engine
+@inject IWorldRepository Repository
+@inject UiState Ui
+@inject IJSRuntime Js
+@implements IDisposable
+
+<div class="app-root">
+    <div id="map"></div>
+    <div class="vignette"></div>
+
+    <TopBar World="Vm" />
+
+    <JournalPanel World="Vm" />
+
+    <SidePanel World="Vm" />
+
+    <div class="walk-hud" id="walk-hud" style="display:none"></div>
+
+    <div class="toasts">
+        @foreach (var t in Ui.Toasts)
+        {
+            <div class="toast @(t.Kind)">
+                <span class="toast-kind">@KindRu(t.Kind)</span>
+                <span>@t.Message</span>
+            </div>
+        }
+    </div>
+
+    <BriefingModal />
+</div>
+
+@code {
+    private DotNetObjectReference<Home>? _self;
+    private WorldVm? _vm;
+    private string? _pendingPayload;
+    private long _pushedVersion = -1;
+    private CancellationTokenSource? _cts;
+
+    private WorldVm? Vm => _vm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _vm = BuildSnapshot();
+        _self = DotNetObjectReference.Create(this);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Js.InvokeVoidAsync("sanyMap.init", _self, new
+            {
+                lat = WorldSeeder.Center.Lat,
+                lng = WorldSeeder.Center.Lng,
+                zoom = 15
+            });
+            _vm = BuildSnapshot();
+            await PushMap();
+            _cts = new CancellationTokenSource();
+            _ = PulseLoop(_cts.Token);
+        }
+    }
+
+    private async Task PulseLoop(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(400));
+        while (await timer.WaitForNextTickAsync(ct))
+        {
+            try
+            {
+                Ui.TickToasts();
+                _vm = BuildSnapshot();
+                await InvokeAsync(StateHasChanged);
+                if (_vm is not null && _vm.Version != _pushedVersion && _pendingPayload is not null)
+                    await PushMap();
+            }
+            catch (OperationCanceledException) { break; }
+            catch (Exception) { /* keep the pulse alive */ }
+        }
+    }
+
+    private WorldVm BuildSnapshot()
+    {
+        var world = Repository.World;
+        lock (world.Gate)
+        {
+            var meId = Ui.MeId;
+            var me = world.PlayerById(meId)!;
+            var terrs = new List<TerrVm>();
+            foreach (var t in world.Territories)
+            {
+                var owner = world.PlayerById(t.OwnerId);
+                var activeWars = world.ActiveWars.Count(w => w.ContextTerritoryId == t.Id);
+                terrs.Add(new TerrVm(
+                    t.Id, t.Name, t.OwnerId, owner?.Name ?? "?", owner?.ColorHex ?? "#999",
+                    t.OwnerId == meId, Engine.AreaKm2(t), Engine.ArmyLimitOf(t), t.Army,
+                    t.Buildings.Select(b => BuildingCatalog.All[b.Type]).ToList(),
+                    activeWars, t.Id == Ui.SelectedTerritoryId));
+            }
+
+            var wars = new List<WarVm>();
+            foreach (var w in world.Wars.OrderByDescending(w => !w.Ended).ThenByDescending(w => w.StartedAtGameTime))
+            {
+                var sides = new List<SideVm>();
+                foreach (var s in w.Sides)
+                {
+                    var possible = Math.Max(1, w.PointsPerCycle * Math.Max(1, w.CyclesGenerated));
+                    var myPts = w.Points.Count(p => p.CapturedBy == s.PlayerId);
+                    var all = w.Sides.Sum(x => x.Mobilized);
+                    var (h, sc, c) = ControlPolicy.Score(myPts, possible, s.Mobilized, all);
+                    var p = world.PlayerById(s.PlayerId);
+                    sides.Add(new SideVm(p?.Name ?? "?", p?.ColorHex ?? "#999", s.Mobilized, h, sc, c, s.PlayerId == meId));
+                }
+                var mySide = w.SideOf(meId);
+                var minutesLeft = w.Ended
+                    ? 0
+                    : (int)Math.Max(0, (w.LastJoinAtGameTime + WarPolicy.JoinRestart - world.GameNow).TotalMinutes);
+                wars.Add(new WarVm(
+                    w.Id, w.Name, w.ZoneAreaKm2, sides, minutesLeft,
+                    w.Points.Count(p => p.CapturedBy == meId),
+                    w.PointsPerCycle * Math.Max(1, w.CyclesGenerated),
+                    mySide is not null, mySide?.Mobilized ?? 0,
+                    w.Ended, w.WinnerId is null ? null : world.PlayerById(w.WinnerId.Value)?.Name, w.EndReason));
+            }
+
+            var myTerrs = terrs.Where(t => t.My).ToList();
+
+            var vm = new WorldVm(
+                world.Version, world.GameNow, terrs, wars,
+                world.JournalSnapshot().Select(j => new JournalVm(j.GameTime, j.Kind, j.Message)).ToList(),
+                myTerrs.Sum(t => t.Army),
+                myTerrs.Sum(t => t.AreaKm2),
+                myTerrs.Sum(t => t.Limit),
+                meId,
+                wars.Count(w => w.IAmSide && !w.Ended));
+
+            _pendingPayload = BuildPayloadCore(world, vm);
+            return vm;
+        }
+    }
+
+    private async Task PushMap()
+    {
+        var payload = _pendingPayload;
+        if (payload is null || _vm is null) return;
+        _pushedVersion = _vm.Version;
+        _pendingPayload = null;
+        try
+        {
+            await Js.InvokeVoidAsync("sanyMap.pushState", payload);
+        }
+        catch (JSDisconnectedException) { }
+        catch (Exception) { /* retry on the next pulse */ }
+    }
+
+    private string BuildPayloadCore(World world, WorldVm vm)
+    {
+        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var colors = world.Players.ToDictionary(p => p.Id, p => p.ColorHex);
+
+        var territories = world.Territories.Select(t => new
+        {
+            id = t.Id,
+            name = t.Name,
+            color = colors.GetValueOrDefault(t.OwnerId, "#999"),
+            parts = t.Parts
+                .Where(p => p.Exterior.Count >= 3)
+                .Select(p => RingsOf(new List<List<GeoPoint>> { p.Exterior }.Concat(p.Holes)))
+                .ToList(),
+            buildings = t.Buildings.Select(b => b.Type switch
+            {
+                BuildingType.ConscriptionOffice => "c",
+                BuildingType.Fortress => "f",
+                BuildingType.Airport => "a",
+                _ => "b"
+            }).ToList(),
+        }).ToList();
+
+        var wars = world.Wars.Where(w => !w.Ended).Select(w => new
+        {
+            id = w.Id,
+            rings = RingsOf(w.ZoneParts.Select(p => p.Exterior)),
+            points = w.Points.Select(p => new
+            {
+                lat = p.Position.Lat,
+                lng = p.Position.Lng,
+                by = p.CapturedBy,
+                color = p.CapturedBy is null ? null : colors.GetValueOrDefault(p.CapturedBy.Value, "#999")
+            }).ToList()
+        }).ToList();
+
+        var tracks = world.RecentTracks
+            .Where(t => world.GameNow - t.AtGameTime <= TimeSpan.FromHours(3) && t.Points.Count >= 2)
+            .Select(t => new
+            {
+                color = colors.GetValueOrDefault(t.PlayerId, "#999"),
+                loop = t.Loop,
+                pts = t.Points.Select(p => new[] { p.Lat, p.Lng }).ToList()
+            })
+            .ToList();
+
+        var dto = new { version = vm.Version, territories, wars, tracks };
+        return JsonSerializer.Serialize(dto, options);
+    }
+
+    private static List<double[][]> RingsOf(IEnumerable<List<GeoPoint>> rings) => rings
+        .Where(r => r.Count >= 3)
+        .Select(r => r.Select(p => new[] { p.Lat, p.Lng }).ToArray())
+        .ToList();
+
+    [JSInvokable]
+    public async Task OnTrackCompleted(double[][] points)
+    {
+        var pts = points.Select(a => new GeoPoint(a[0], a[1])).ToList();
+        var events = Engine.AddTrack(Ui.MeId, pts);
+        Ui.PushToasts(events);
+        _vm = BuildSnapshot();
+        await PushMap();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task OnTerritoryClicked(string idStr)
+    {
+        if (Guid.TryParse(idStr, out var id))
+            Ui.SelectedTerritoryId = id == Ui.SelectedTerritoryId ? null : id;
+        _vm = BuildSnapshot();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static string KindRu(string kind) => kind switch
+    {
+        "war" => "ВОЙНА",
+        "battle" => "БОЙ",
+        "capture" => "ЗЕМЛИ",
+        "army" => "АРМИЯ",
+        "build" => "ПОСТРОЙКА",
+        "system" => "СИСТЕМА",
+        _ => "СВОДКА",
+    };
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _self?.Dispose();
+    }
+}

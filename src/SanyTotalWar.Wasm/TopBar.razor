@@ -1,0 +1,47 @@
+﻿@using SanyTotalWar.Domain.Entities
+@using SanyTotalWar.Domain.Policies
+@using SanyTotalWar.Wasm.Services
+@inject UiState Ui
+
+<div class="top-bar panel">
+    <div class="brand">
+        <span class="brand-mark"></span>
+        <div>
+            <div class="brand-title">SANY <span>TOTAL WAR</span></div>
+            <div class="brand-sub">ВЕБ-ПРОТОТИП · МЕХАНИКА ЗЕМЕЛЬ</div>
+        </div>
+    </div>
+
+    <div class="clock-box">
+        <div class="clock">@World.Now.ToString("dd.MM HH:mm")</div>
+        <div class="speed">
+            <button class="@SpeedCls(1)" @onclick="() => SetSpeed(1)">×1</button>
+            <button class="@SpeedCls(60)" @onclick="() => SetSpeed(60)">×60</button>
+            <button class="@SpeedCls(600)" @onclick="() => SetSpeed(600)">×600</button>
+        </div>
+    </div>
+
+    <div class="top-stats">
+        <div class="stat">
+            <span class="stat-val">@World.MyArea.ToString("0.00")</span>
+            <span class="stat-lbl">км² земли</span>
+        </div>
+        <div class="stat">
+            <span class="stat-val">@World.MyArmy <span class="stat-sub">/ @World.MyLimit</span></span>
+            <span class="stat-lbl">армия · лимит</span>
+        </div>
+        <div class="stat @(World.MyActiveWars > 0 ? "stat-war" : "")">
+            <span class="stat-val">@World.MyActiveWars</span>
+            <span class="stat-lbl">активных войн</span>
+        </div>
+        <button class="brief-btn" @onclick="() => Ui.ShowBriefing = true">БРИФИНГ</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public required WorldVm World { get; set; }
+
+    private void SetSpeed(double s) => Ui.GameSpeed = s;
+
+    private string SpeedCls(double s) => Math.Abs(Ui.GameSpeed - s) < 0.01 ? "speed-btn on" : "speed-btn";
+}

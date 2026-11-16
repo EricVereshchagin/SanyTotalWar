@@ -1,0 +1,40 @@
+﻿@using SanyTotalWar.Wasm.Services
+@inject UiState Ui
+@inject GameEngine Engine
+
+<div class="side panel">
+    @if (World.Wars.Any(w => !w.Ended))
+    {
+        <div class="panel-head war-head">АКТИВНЫЕ ВОЙНЫ · @World.Wars.Count(w => !w.Ended)</div>
+        @foreach (var war in World.Wars.Where(w => !w.Ended).Take(4))
+        {
+            <WarCard War="war" />
+        }
+    }
+
+    <div class="panel-head">@SelectedTitle</div>
+
+    @if (Sel is null)
+    {
+        <div class="side-empty">
+            Кликните по территории, чтобы увидеть её досье и приказы.<br /><br />
+            <b>Управление:</b><br />
+            ЛКМ (зажать) — маршрут похода<br />
+            Замкнутая петля — захват / атака (UC-01/06)<br />
+            ПКМ (зажать) — панорама карты<br />
+            Колесо мыши — зум
+        </div>
+    }
+    else
+    {
+        <TerritoryCard Terr="Sel" />
+    }
+</div>
+
+@code {
+    [Parameter] public required WorldVm World { get; set; }
+
+    private TerrVm? Sel => World.Territories.FirstOrDefault(t => t.Id == Ui.SelectedTerritoryId);
+
+    private string SelectedTitle => Sel is null ? "ШТАБ" : $"ДОСЬЕ · {Sel.Name}";
+}
