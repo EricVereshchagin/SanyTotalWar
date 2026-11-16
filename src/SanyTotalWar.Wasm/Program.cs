@@ -15,6 +15,5 @@ builder.Services.AddSingleton<IGeometryService, NtsGeometryService>();
 builder.Services.AddSingleton<IWorldRepository, InMemoryWorldRepository>();
 builder.Services.AddSingleton<GameEngine>();
 builder.Services.AddSingleton<UiState>();
-builder.Services.AddHostedService<GameTickService>();
 
 await builder.Build().RunAsync();

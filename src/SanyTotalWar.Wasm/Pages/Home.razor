@@ -73,11 +73,18 @@
 
     private async Task PulseLoop(CancellationToken ct)
     {
+        var lastTickUtc = DateTime.UtcNow;
         using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(400));
         while (await timer.WaitForNextTickAsync(ct))
         {
             try
             {
+                var nowUtc = DateTime.UtcNow;
+                var dt = nowUtc - lastTickUtc;
+                lastTickUtc = nowUtc;
+                if (dt > TimeSpan.FromSeconds(2)) dt = TimeSpan.FromSeconds(2);
+                Engine.Tick(TimeSpan.FromSeconds(dt.TotalSeconds * Ui.GameSpeed));
+
                 Ui.TickToasts();
                 _vm = BuildSnapshot();
                 await InvokeAsync(StateHasChanged);
