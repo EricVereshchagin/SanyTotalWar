@@ -82,14 +82,15 @@ DumpMeters(MaxDeviation(beforeParts, cap.Parts.SelectMany(p => p.Exterior).ToLis
 
 // Захват дугой: открытый маршрут от границы своей земли в нейтраль и обратно к границе
 Console.WriteLine("\n== arc capture (no loop) ==");
+var capC = geo.Centroid(engine.PartsAsShapes(cap));
 var arc = new List<GeoPoint>
 {
-    GeoSketch.OffsetM(WorldSeeder.Center, 150, 280),    // старт у северной границы Плацдарма
-    GeoSketch.OffsetM(WorldSeeder.Center, 90, 480),
-    GeoSketch.OffsetM(WorldSeeder.Center, 0, 560),      // вершина дуги в нейтральной земле
-    GeoSketch.OffsetM(WorldSeeder.Center, -90, 480),
-    GeoSketch.OffsetM(WorldSeeder.Center, -150, 280),   // конец у границы
-    GeoSketch.OffsetM(WorldSeeder.Center, -60, 240),
+    GeoSketch.OffsetM(capC, 0, -280),    // старт у северной границы «Сектора 1»
+    GeoSketch.OffsetM(capC, 60, -100),
+    GeoSketch.OffsetM(capC, 0, 420),     // вершина дуги в нейтральной земле
+    GeoSketch.OffsetM(capC, -60, -100),
+    GeoSketch.OffsetM(capC, 0, -280),    // конец у границы
+    GeoSketch.OffsetM(capC, 30, -240),
 };
 var mergedBefore = engine.AreaKm2(world.TerritoriesOf(meId).OrderByDescending(engine.AreaKm2).First());
 Report(meId, engine.AddTrack(meId, arc));
@@ -109,9 +110,9 @@ static void DumpMeters(double dev, double a0, double a1, int parts) =>
     Console.WriteLine($"   deviation: {dev:0.0} m; area {a0:0.000} -> {a1:0.000} km2; parts={parts}");
 Dump("after capture");
 
-// UC-04: слияние прилегающей петли (перекрывает край своей земли)
+// UC-04: слияние прилегающей петли (перекрывает южный край «Сектора 1»)
 Console.WriteLine("\n== UC-04 merge adjacent ==");
-Report(meId, engine.AddTrack(meId, RingAt(0, 470, 240, 12)));
+Report(meId, engine.AddTrack(meId, RingAt(1500, 640, 240, 12)));
 Dump("after merge");
 
 // UC-02/03: пополнение армии и лимит

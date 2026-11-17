@@ -22,7 +22,7 @@ public static class WorldSeeder
         var free = new Player { Name = "Вольный Корпус", IsBot = true, ColorHex = "#9a6dc9" };
         world.Players.AddRange(new[] { me, reds, steel, free });
 
-        AddTerritory(world, me, Ring(Center, 230, 14, 0.10), armyShare: 0.45, buildings: BuildingType.ConscriptionOffice);
+        // старт «с нуля»: своя земля появляется только через первую петлю маршрута (UC-01)
         AddTerritory(world, reds, Ring(Offset(Center, 640, -420), 240, 14, 0.16), armyShare: 0.55, buildings: BuildingType.Fortress);
         AddTerritory(world, steel, Ring(Offset(Center, -560, 560), 260, 14, 0.16), armyShare: 0.6, buildings: BuildingType.ConscriptionOffice);
         AddTerritory(world, free, Ring(Offset(Center, -900, -350), 200, 14, 0.2), armyShare: 0.45);

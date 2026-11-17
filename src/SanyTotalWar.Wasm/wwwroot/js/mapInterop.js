@@ -32,7 +32,7 @@
         }
         if (!svg.querySelector('pattern#terrPhoto')) {
             defs.innerHTML =
-                `<pattern id="terrPhoto" patternUnits="objectBoundingBox" width="1" height="1">` +
+                `<pattern id="terrPhoto" patternUnits="objectBoundingBox" patternContentUnits="objectBoundingBox" width="1" height="1">` +
                 `<image href="img/my-land.jpg" xlink:href="img/my-land.jpg" x="0" y="0" width="1" height="1" ` +
                 `preserveAspectRatio="xMidYMid slice" opacity="0.9"/></pattern>`;
         }
