@@ -219,6 +219,112 @@
         fxPrimed = true;
     }
 
+    // ---- территории: инкрементальное обновление (без пересоздания под курсором) ----
+
+    const terrIndex = new Map(); // id -> { polys, sig, bldMarker, bldKey, data }
+
+    function geoSig(t) {
+        const parts = t.parts || [];
+        let sig = parts.length + '|';
+        for (const part of parts) {
+            sig += part.length + '|';
+            for (const ring of part) sig += ring.length + ',';
+        }
+        return sig;
+    }
+
+    function updateTerritories(state) {
+        const keep = new Set();
+
+        for (const t of state.territories) {
+            keep.add(t.id);
+            let entry = terrIndex.get(t.id);
+            if (!entry) {
+                entry = { polys: [], sig: '', bldMarker: null, bldKey: null, data: null };
+                terrIndex.set(t.id, entry);
+            }
+            entry.data = t;
+
+            const sig = geoSig(t);
+            if (sig !== entry.sig) {
+                for (const p of entry.polys) gTerritory.removeLayer(p);
+                entry.polys = [];
+                for (const part of (t.parts || [])) {
+                    if (!part.length || !part[0].length) continue;
+                    const latlngs = part.map(r => r.map(p => [p[0], p[1]]));
+                    const poly = L.polygon(latlngs, {
+                        color: t.color,
+                        weight: t.mine ? 3.5 : 2,
+                        fillColor: t.color,
+                        fillOpacity: t.mine ? 0.38 : 0.30,
+                        className: 'terr',
+                        bubblingMouseEvents: false
+                    });
+                    // досье открывается кликом, а не наведением
+                    poly.on('click', e => {
+                        const d = entry.data;
+                        if (d && d.selected) { closeTerrTip(); }
+                        else { showTerrTip(d, e.latlng); }
+                        dotnet.invokeMethodAsync('OnTerritoryClicked', d.id);
+                    });
+                    gTerritory.addLayer(poly);
+                    entry.polys.push(poly);
+                }
+                entry.sig = sig;
+            }
+
+            const mine = !!t.mine;
+            for (const p of entry.polys) {
+                p.setStyle({
+                    color: t.color,
+                    weight: mine ? 3.5 : 2,
+                    fillColor: t.color,
+                    fillOpacity: mine ? 0.38 : 0.30
+                });
+                if (p._path) p._path.classList.toggle('sel', !!t.selected);
+            }
+
+            // постройки: маркер трогаем только при смене набора/центра
+            const c = centroidOf(t);
+            const bldKey = c ? (t.buildings || []).join('') : '';
+            if (entry.bldMarker && (entry.bldKey !== bldKey || !c)) {
+                gTerritory.removeLayer(entry.bldMarker);
+                entry.bldMarker = null;
+                entry.bldKey = null;
+            }
+            if (c && bldKey) {
+                if (entry.bldMarker) {
+                    entry.bldMarker.setLatLng(c);
+                } else {
+                    const icons = (t.buildings || []).map(ch => {
+                        const g = BLD_GLYPHS[ch] || ['?', '#999'];
+                        return `<span class="bld" style="border-color:${g[1]};color:${g[1]}" title="">${g[0]}</span>`;
+                    }).join('');
+                    entry.bldMarker = L.marker(c, {
+                        icon: L.divIcon({
+                            className: 'bld-wrap',
+                            html: `<div class="bld-icons">${icons}</div>`,
+                            iconSize: [64, 18],
+                            iconAnchor: [32, 9]
+                        }),
+                        interactive: false
+                    });
+                    gTerritory.addLayer(entry.bldMarker);
+                    entry.bldKey = bldKey;
+                }
+            }
+        }
+
+        // исчезнувшие земли (слияние/распад): убрать políгоны с карты
+        for (const [id, entry] of Array.from(terrIndex)) {
+            if (!keep.has(id)) {
+                for (const p of entry.polys) gTerritory.removeLayer(p);
+                if (entry.bldMarker) gTerritory.removeLayer(entry.bldMarker);
+                terrIndex.delete(id);
+            }
+        }
+    }
+
     // ---- рендер мира ----
 
     function render(state) {
@@ -233,57 +339,12 @@
         lastVersion = state.version;
         lastSelId = state.sel || null;
 
-        gTerritory.clearLayers();
         gWars.clearLayers();
         gPoints.clearLayers();
         gTracks.clearLayers();
 
+        updateTerritories(state);
         spawnFx(state);
-
-        for (const t of state.territories) {
-            for (const part of (t.parts || [])) {
-                if (!part.length || !part[0].length) continue;
-                const latlngs = part.map(r => r.map(p => [p[0], p[1]]));
-                const mine = !!t.mine;
-                const poly = L.polygon(latlngs, {
-                    color: t.color,
-                    weight: mine ? 3.5 : 2,
-                    fillColor: t.color,
-                    fillOpacity: mine ? 0.38 : 0.30,
-                    className: 'terr',
-                    bubblingMouseEvents: false
-                });
-                // досье открывается кликом, а не наведением
-                poly.on('click', e => {
-                    if (t.selected) { closeTerrTip(); }
-                    else { showTerrTip(t, e.latlng); }
-                    dotnet.invokeMethodAsync('OnTerritoryClicked', t.id);
-                });
-                gTerritory.addLayer(poly);
-                if (t.selected && poly._path) poly._path.classList.add('sel');
-            }
-
-            if (t.buildings && t.buildings.length && t.parts && t.parts.length) {
-                const ring = t.parts[0][0];
-                let la = 0, ln = 0;
-                for (const p of ring) { la += p[0]; ln += p[1]; }
-                la /= ring.length; ln /= ring.length;
-                const icons = t.buildings.map(c => {
-                    const g = BLD_GLYPHS[c] || ['?', '#999'];
-                    return `<span class="bld" style="border-color:${g[1]};color:${g[1]}" title="">${g[0]}</span>`;
-                }).join('');
-                const m = L.marker([la, ln], {
-                    icon: L.divIcon({
-                        className: 'bld-wrap',
-                        html: `<div class="bld-icons">${icons}</div>`,
-                        iconSize: [64, 18],
-                        iconAnchor: [32, 9]
-                    }),
-                    interactive: false
-                });
-                gTerritory.addLayer(m);
-            }
-        }
 
         for (const w of state.wars) {
             const latlngs = ringsToLatLngs(w.rings, []);
@@ -291,6 +352,7 @@
                 stroke: false,
                 fillColor: WAR,
                 fillOpacity: 0.16,
+                interactive: false,   // зоны не перехватывают клики территорий
                 className: 'war-glow'
             });
             const zone = L.polygon(latlngs, {
@@ -298,9 +360,9 @@
                 weight: 2.5,
                 dashArray: '9 7',
                 fillOpacity: 0.08,
+                interactive: false,
                 className: 'war-zone'
             });
-            [glow, zone].forEach(l => l.on('click', () => { }));
             gWars.addLayer(glow);
             gWars.addLayer(zone);
 
@@ -308,6 +370,7 @@
                 const cls = p.by ? 'ctrl-point owned' : 'ctrl-point free';
                 const style = p.by ? `border-color:${p.color};background:${p.color}33` : '';
                 const m = L.marker([p.lat, p.lng], {
+                    interactive: false,
                     icon: L.divIcon({
                         className: 'ctrl-wrap',
                         html: `<div class="${cls}" style="${style}"></div>`,
