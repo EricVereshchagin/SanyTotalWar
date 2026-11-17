@@ -9,7 +9,7 @@
 ## Как запустить
 
 ```bash
-dotnet run --project src/SanyTotalWar.Web
+dotnet run --project src/SanyTotalWar.Wasm
 ```
 
 Откроется страница с брифингом (управление и правила). Интенсивность мира задаётся переключателем скорости: ×1 / ×60 / ×600 (по умолчанию ×600: 1 игровой час ≈ 6 секунд).
@@ -41,7 +41,7 @@ src/
   SanyTotalWar.Domain          — сущности и чистые правила (ArmyPolicy, CombatPolicy, WarPolicy, ControlPolicy, DecayPolicy)
   SanyTotalWar.Application     — юзер-кейсы (GameEngine), ИИ-соперники (BotDirector), контракты геометрии и хранилища
   SanyTotalWar.Infrastructure  — NetTopologySuite-геометрия (union / difference / пересечения, компоненты связности), in-memory мир
-  SanyTotalWar.Web             — Blazor Server: Leaflet-interop, панели штаба/журнала/войн, военный стиль, тик времени
+  SanyTotalWar.Wasm            — Blazor WASM (GitHub Pages): Leaflet-interop, панели штаба/журнала/войн, ночная съёмка, тик времени
 tools/SimSmoke                 — headless-прогон всех механик
 ```
 

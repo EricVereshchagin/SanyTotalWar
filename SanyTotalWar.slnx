@@ -4,6 +4,5 @@
     <Project Path="src/SanyTotalWar.Domain/SanyTotalWar.Domain.csproj" />
     <Project Path="src/SanyTotalWar.Infrastructure/SanyTotalWar.Infrastructure.csproj" />
     <Project Path="src/SanyTotalWar.Wasm/SanyTotalWar.Wasm.csproj" />
-    <Project Path="src/SanyTotalWar.Web/SanyTotalWar.Web.csproj" />
   </Folder>
 </Solution>
