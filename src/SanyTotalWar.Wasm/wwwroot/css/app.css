@@ -721,6 +721,14 @@ html, body {
 
 .dock-body { padding: 12px 12px 14px; max-height: 48vh; overflow-y: auto; scrollbar-width: thin; }
 
+.pane-hide { display: none; }
+
+/* десктоп: в доке слева снизу — только войны, досье живёт в плавающей карточке */
+.dock-pane.dock-item-dossier { display: none; }
+@media (min-width: 1100px) {
+    .dock-tab.dock-item-dossier { display: none; }
+}
+
 .dock-empty { padding: 10px 6px; font-size: 12px; line-height: 1.8; color: var(--ink-dim); }
 .dock-empty b { color: var(--phos); }
 

@@ -10,46 +10,40 @@
         <button class="dock-tab @(Ui.DockTab == "wars" ? "on" : "")" @onclick='() => SetTab("wars")'>
             ВОЙНЫ<span class="n">@ActiveWars</span>
         </button>
-        <button class="dock-tab @(Ui.DockTab == "dossier" ? "on" : "")" @onclick='() => SetTab("dossier")'>
+        <button class="dock-tab dock-item-dossier @(Ui.DockTab == "dossier" ? "on" : "")" @onclick='() => SetTab("dossier")'>
             ДОСЬЕ
         </button>
     </div>
 
-    @if (Ui.DockOpen)
-    {
-        <div class="dock-body">
-            @switch (Ui.DockTab)
+    <div class="dock-body">
+        <div class="dock-pane @(Ui.DockTab == "wars" ? "" : "pane-hide")">
+            @if (ActiveWars > 0)
             {
-                case "wars":
-                    @if (ActiveWars > 0)
-                    {
-                        foreach (var war in World.Wars.Where(w => !w.Ended).Take(4))
-                        {
-                            <WarCard War="war" />
-                        }
-                    }
-                    else
-                    {
-                        <div class="dock-empty">Мир пока не нарушен. Замкните петлю поверх чужой земли, чтобы объявить войну (UC-06).</div>
-                    }
-                    break;
-
-                case "dossier":
-                    @if (Sel is null)
-                    {
-                        <div class="dock-empty">
-                            <b>◈ Марш:</b> кнопка МАРШ, затем ведите пальцем и замкните петлю.<br />
-                            <b>◉ Тап по территории</b> — досье и приказы.
-                        </div>
-                    }
-                    else
-                    {
-                        <TerritoryCard Terr="Sel" />
-                    }
-                    break;
+                foreach (var war in World.Wars.Where(w => !w.Ended).Take(4))
+                {
+                    <WarCard War="war" />
+                }
+            }
+            else
+            {
+                <div class="dock-empty">Нету войн. Замкни петлю поверх чужой земли, чтобы объявить войну (UC-06).</div>
             }
         </div>
-    }
+
+        <div class="dock-pane dock-item-dossier @(Ui.DockTab == "dossier" ? "" : "pane-hide")">
+            @if (Sel is null)
+            {
+                <div class="dock-empty">
+                    <b>◈ Марш:</b> веди след и пересеки его сам — петля.<br />
+                    <b>◉ Тап по территории</b> — досье и приказы.
+                </div>
+            }
+            else
+            {
+                <TerritoryCard Terr="Sel" />
+            }
+        </div>
+    </div>
 </div>
 
 @code {
