@@ -330,11 +330,21 @@
             const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap contributors',
-                className: 'war-tiles'
+                className: 'war-tiles',
+                // гладкое отдаление: не роняем старые тайлы посреди анимации,
+                // держим широкий буфер за краем видимой области
+                keepBuffer: 5,
+                updateWhenZooming: false,
+                updateWhenIdle: false,
+                errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
             });
             const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 19,
-                attribution: '© Esri, Maxar, Earthstar Geographics'
+                attribution: '© Esri, Maxar, Earthstar Geographics',
+                keepBuffer: 5,
+                updateWhenZooming: false,
+                updateWhenIdle: false,
+                errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
             });
             osm.addTo(map);
 

@@ -54,6 +54,11 @@ html, body {
 
 #map { position: absolute; inset: 0; background: var(--bg-2); }
 
+/* фон под тайлами: зазоры непрогруженных тайлов выглядят как тёмная зелень
+   «неразведанной местности», а не чёрные дыры */
+.leaflet-tile-pane { background: #122017; }
+.leaflet-tile { image-rendering: auto; }
+
 /* карта: ночная съёмка */
 .war-tiles { filter: grayscale(0.42) brightness(0.66) contrast(1.22) sepia(0.26) hue-rotate(52deg) saturate(1.2); }
 
