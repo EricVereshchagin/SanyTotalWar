@@ -959,6 +959,14 @@ html, body {
     filter: brightness(0.88);
 }
 
+/* свои земли заливаются фотографией (карта просвечивает) */
+.terr.mine {
+    fill: url(#terrPhoto);
+    fill-opacity: 0.72;
+}
+.terr.mine:hover { fill-opacity: 0.86; filter: brightness(1.04); }
+.terr.mine.sel { fill-opacity: 0.92; }
+
 /* тултип = краткое досье территории */
 .war-tip {
     background: rgba(12, 17, 14, 0.93) !important;

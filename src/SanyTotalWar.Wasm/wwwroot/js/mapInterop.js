@@ -17,6 +17,27 @@
     let renderPending = null;
     let zoomingNow = false;
     let lastSelId = null;
+    let photoPatternReady = false;
+
+    // паттерн-заливка своих земель фотографией (bbox territories, cover)
+    function ensurePhotoPattern() {
+        if (photoPatternReady) return;
+        const pane = map.getPane('overlayPane');
+        const svg = pane && pane.querySelector('svg');
+        if (!svg) return;
+        let defs = svg.querySelector('defs');
+        if (!defs) {
+            defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            svg.prepend(defs);
+        }
+        if (!svg.querySelector('pattern#terrPhoto')) {
+            defs.innerHTML =
+                `<pattern id="terrPhoto" patternUnits="objectBoundingBox" width="1" height="1">` +
+                `<image href="img/my-land.jpg" xlink:href="img/my-land.jpg" x="0" y="0" width="1" height="1" ` +
+                `preserveAspectRatio="xMidYMid slice" opacity="0.9"/></pattern>`;
+        }
+        photoPatternReady = true;
+    }
 
     // дифф состояния для фоновых FX-анимаций
     let fxPrimed = false;          // первый кадр — только фиксируем базу, без анимаций
@@ -292,7 +313,7 @@
                         weight: t.mine ? 3.5 : 2,
                         fillColor: t.color,
                         fillOpacity: t.mine ? 0.38 : 0.30,
-                        className: 'terr',
+                        className: 'terr' + (t.mine ? ' mine' : ''),
                         bubblingMouseEvents: false
                     });
                 // досье открывается кликом; в режиме установки клик = «поставить здесь»
@@ -319,7 +340,10 @@
                     fillColor: t.color,
                     fillOpacity: mine ? 0.38 : 0.30
                 });
-                if (p._path) p._path.classList.toggle('sel', !!t.selected);
+                if (p._path) {
+                    p._path.classList.toggle('sel', !!t.selected);
+                    p._path.classList.toggle('mine', mine);
+                }
             }
 
             // постройки: маркеры по точкам установки, обновление при смене набора
@@ -379,6 +403,7 @@
         gPoints.clearLayers();
         gTracks.clearLayers();
 
+        ensurePhotoPattern();
         updateTerritories(state);
         spawnFx(state);
 
