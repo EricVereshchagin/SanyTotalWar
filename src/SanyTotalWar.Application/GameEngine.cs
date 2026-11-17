@@ -19,7 +19,8 @@ public sealed class GameEngine
     public const double LoopClosureM = 90;
     public const double PointCaptureRadiusM = 80;
     public const double FortressRadiusM = 500;
-    public const double MergeToleranceM = 60;
+    public const double TouchToleranceM = 0;     // UC-04: объединение только при реальном касании/перекрытии границ
+    public const double ArcAnchorToleranceM = 60; // допустимый зазор конца дуги до своей границы
     public const double MinSplitPieceM2 = 1500;
 
     private readonly IWorldRepository _repo;
@@ -146,11 +147,11 @@ public sealed class GameEngine
             world.TerritoriesOf(player.Id)
                 .FirstOrDefault(t => _geo.DistanceMeters(
                     new[] { GeoShape.Simple(new List<GeoPoint> { start, start, start }) },
-                    PartsAsShapes(t)) <= MergeToleranceM) ??
+                    PartsAsShapes(t)) <= ArcAnchorToleranceM) ??
             world.TerritoriesOf(player.Id)
                 .FirstOrDefault(t => _geo.DistanceMeters(
                     new[] { GeoShape.Simple(new List<GeoPoint> { end, end, end }) },
-                    PartsAsShapes(t)) <= MergeToleranceM);
+                    PartsAsShapes(t)) <= ArcAnchorToleranceM);
 
         if (anchor is null) return false;
 
@@ -179,7 +180,7 @@ public sealed class GameEngine
                 {
                     var a = owned[i];
                     var b = owned[j];
-                    if (_geo.DistanceMeters(PartsAsShapes(a), PartsAsShapes(b)) > MergeToleranceM) continue;
+                    if (_geo.DistanceMeters(PartsAsShapes(a), PartsAsShapes(b)) > TouchToleranceM) continue;
                     var target = AreaKm2(a) >= AreaKm2(b) ? a : b;
                     var other = target == a ? b : a;
                     var merged = _geo.Union(PartsAsShapes(target).Concat(PartsAsShapes(other)));
@@ -253,7 +254,7 @@ public sealed class GameEngine
 
         var owned = world.TerritoriesOf(player.Id).ToList();
         var touched = owned
-            .Where(t => _geo.DistanceMeters(new[] { loop }, PartsAsShapes(t)) <= MergeToleranceM)
+            .Where(t => _geo.DistanceMeters(new[] { loop }, PartsAsShapes(t)) <= TouchToleranceM)
             .ToList();
         if (touched.Count == 0)
         {
@@ -663,7 +664,7 @@ public sealed class GameEngine
             }
 
             var winTouched = world.TerritoriesOf(winnerId.Value)
-                .Where(t => _geo.DistanceMeters(PartsAsShapes(t), zoneShapes) <= MergeToleranceM)
+                .Where(t => _geo.DistanceMeters(PartsAsShapes(t), zoneShapes) <= TouchToleranceM)
                 .ToList();
             if (winTouched.Count > 0)
             {
