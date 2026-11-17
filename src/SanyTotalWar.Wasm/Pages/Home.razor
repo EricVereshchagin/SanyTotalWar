@@ -20,21 +20,17 @@
 
     <TopBar World="Vm" />
 
-    <JournalPanel World="Vm" />
-
     <SidePanel World="Vm" />
 
     <MobileDock World="Vm" />
 
     <div class="walk-hud" id="walk-hud" style="display:none"></div>
 
-    <div class="toasts">
-        @foreach (var t in Ui.Toasts)
+    <div class="signals">
+        @if (Ui.Toasts.Count > 0)
         {
-            <div class="toast @(t.Kind)">
-                <span class="toast-kind">@KindRu(t.Kind)</span>
-                <span>@t.Message</span>
-            </div>
+            var t = @Ui.Toasts[^1];
+            <div class="signal @(t.Kind)">@KindRu(t.Kind) · @t.Message</div>
         }
     </div>
 

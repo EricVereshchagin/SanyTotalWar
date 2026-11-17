@@ -18,7 +18,7 @@ public sealed class UiState
     public bool ShowBriefing { get; set; } = true;
     public bool MarchMode { get; set; }
     public bool DockOpen { get; set; } = true;
-    public string DockTab { get; set; } = "dossier";
+    public string DockTab { get; set; } = "wars";
     private readonly List<ToastItem> _toasts = new();
     public IReadOnlyList<ToastItem> Toasts => _toasts;
 

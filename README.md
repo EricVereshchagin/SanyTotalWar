@@ -60,7 +60,7 @@ src/
   SanyTotalWar.Domain          — сущности и чистые правила (ArmyPolicy, CombatPolicy, WarPolicy, ControlPolicy, DecayPolicy)
   SanyTotalWar.Application     — юзер-кейсы (GameEngine), ИИ-соперники (BotDirector), контракты геометрии и хранилища
   SanyTotalWar.Infrastructure  — NetTopologySuite-геометрия (union / difference / пересечения, компоненты связности), in-memory мир
-  SanyTotalWar.Wasm            — Blazor WASM (GitHub Pages): Leaflet-interop, панели штаба/журнала/войн, ночная съёмка, тик времени
+  SanyTotalWar.Wasm            — Blazor WASM (GitHub Pages): Leaflet-interop, панели штаба/войн, ночная съёмка, тик времени
 tools/SimSmoke                 — headless-прогон всех механик
 ```
 

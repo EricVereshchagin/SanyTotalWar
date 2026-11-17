@@ -11,7 +11,12 @@
     let lastVersion = -1;
 
     const gTerr = () => L.layerGroup().addTo(map);
-    let gTerritory, gWars, gPoints, gWalk, gTracks;
+    let gTerritory, gWars, gPoints, gWalk, gTracks, gFx;
+
+    // дифф состояния для фоновых FX-анимаций
+    let seenTerr = new Map();      // id -> кол-во построек
+    let seenWars = new Set();      // id активных войн
+    let lastWarCenters = new Map();// id -> [lat,lng]
 
     const PHOS = '#c6f24e', WAR = '#ff5a4e';
     const BLD_GLYPHS = { 'c': ['В', '#c6f24e'], 'f': ['К', '#ff5a4e'], 'a': ['А', '#5bd4e6'], 'b': ['Б', '#5fc98d'] };
@@ -80,6 +85,76 @@
         return map.containerPointToLatLng(L.point(cx - rect.left, cy - rect.top));
     }
 
+    // ---- FX: анимации внутри территорий (вместо текстовых тостов) ----
+
+    function fxMarker(lat, lng, html, ttlMs) {
+        if (!map) return;
+        const m = L.marker([lat, lng], {
+            interactive: false,
+            icon: L.divIcon({
+                className: 'fx-wrap',
+                html: html,
+                iconSize: [160, 160],
+                iconAnchor: [80, 80]
+            })
+        }).addTo(gFx);
+        setTimeout(() => { try { gFx.removeLayer(m); } catch (e) { } }, ttlMs);
+    }
+
+    function centroidOf(t) {
+        const ring = t.parts && t.parts.length && t.parts[0].length ? t.parts[0][0] : null;
+        if (!ring || !ring.length) return null;
+        let la = 0, ln = 0;
+        for (const p of ring) { la += p[0]; ln += p[1]; }
+        return [la / ring.length, ln / ring.length];
+    }
+
+    function spawnFx(state) {
+        const nowTerr = new Map(), nowWars = new Set(), nowCenters = new Map();
+
+        for (const t of state.territories) {
+            const c = centroidOf(t);
+            if (!c) continue;
+            nowTerr.set(t.id, (t.buildings || []).length);
+            const prevBld = seenTerr.get(t.id);
+            if (seenTerr.has(t.id)) {
+                // рост постройки на живой земле
+                if ((t.buildings || []).length > prevBld) {
+                    fxMarker(c[0], c[1], '<div class="fx fx-bld"></div>', 1800);
+                }
+            } else {
+                // новая земля — захват (всплеск + штамп-кольцо)
+                fxMarker(c[0], c[1], '<div class="fx fx-capture"><i></i><i></i><b></b></div>', 2600);
+            }
+        }
+
+        for (const w of state.wars) {
+            const ring = w.rings && w.rings.length ? w.rings[0] : null;
+            if (!ring || !ring.length) continue;
+            let la = 0, ln = 0;
+            for (const p of ring) { la += p[0]; ln += p[1]; }
+            const c = [la / ring.length, ln / ring.length];
+            nowWars.add(w.id);
+            nowCenters.set(w.id, c);
+            if (!seenWars.has(w.id)) {
+                // новая война — ударные кольца в зоне
+                fxMarker(c[0], c[1], '<div class="fx fx-war"><i></i><i></i><i></i><b></b></div>', 3200);
+            }
+        }
+
+        for (const id of seenWars) {
+            if (!nowWars.has(id) && lastWarCenters.has(id)) {
+                const c = lastWarCenters.get(id);
+                // война завершилась — мягкая дуга затухания
+                fxMarker(c[0], c[1], '<div class="fx fx-peace"><i></i></div>', 2200);
+            }
+        }
+
+        seenTerr = nowTerr;
+        seenWars = nowWars;
+        lastWarCenters = nowCenters;
+    }
+
     // ---- рендер мира ----
 
     function render(state) {
@@ -91,6 +166,8 @@
         gWars.clearLayers();
         gPoints.clearLayers();
         gTracks.clearLayers();
+
+        spawnFx(state);
 
         for (const t of state.territories) {
             for (const part of (t.parts || [])) {
@@ -202,6 +279,7 @@
             gPoints = gTerr();
             gWalk = gTerr();
             gTracks = gTerr();
+            gFx = gTerr();
 
             const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,

@@ -13,9 +13,6 @@
         <button class="dock-tab @(Ui.DockTab == "dossier" ? "on" : "")" @onclick='() => SetTab("dossier")'>
             ДОСЬЕ
         </button>
-        <button class="dock-tab @(Ui.DockTab == "journal" ? "on" : "")" @onclick='() => SetTab("journal")'>
-            СВОДКИ
-        </button>
     </div>
 
     @if (Ui.DockOpen)
@@ -49,10 +46,6 @@
                     {
                         <TerritoryCard Terr="Sel" />
                     }
-                    break;
-
-                case "journal":
-                    <JournalList World="World" />
                     break;
             }
         </div>

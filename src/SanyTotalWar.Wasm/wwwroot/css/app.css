@@ -318,35 +318,6 @@ html, body {
     padding: 10px 14px 4px;
 }
 
-/* ---------- журнал (десктоп-рельса) ---------- */
-
-.journal { left: 10px; top: 130px; width: 330px; max-height: calc(100% - 152px); display: flex; flex-direction: column; }
-
-.journal-list { overflow-y: auto; padding: 8px 0 12px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent; }
-
-.journal-item {
-    padding: 6px 14px;
-    font-size: 12px;
-    line-height: 1.4;
-    border-left: 2px solid transparent;
-    margin-left: 10px;
-    border-radius: 0 8px 8px 0;
-    animation: jIn 0.45s ease both;
-    display: flex;
-    gap: 10px;
-}
-@keyframes jIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
-
-.j-time { font-family: var(--font-data); color: var(--ink-faint); font-size: 9.5px; padding-top: 2px; flex: none; }
-.j-text { color: var(--ink); }
-
-.journal-item.war { border-left-color: var(--war); background: rgba(255, 90, 78, 0.07); }
-.journal-item.battle { border-left-color: var(--warm); }
-.journal-item.capture { border-left-color: var(--phos); }
-.journal-item.army { border-left-color: var(--ok); }
-.journal-item.build { border-left-color: var(--ice); }
-.journal-item.system { border-left-color: var(--ink-faint); color: var(--ink-dim); }
-
 /* ---------- правая рельса (десктоп) ---------- */
 
 .side { right: 10px; top: 130px; width: 348px; max-height: calc(100% - 152px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent; padding-bottom: 12px; }
@@ -357,6 +328,8 @@ html, body {
 .side-note { padding: 10px 14px 4px; font-size: 11px; color: var(--ink-dim); line-height: 1.55; }
 
 /* карточка войны */
+
+@keyframes jIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 .war-card {
     margin: 10px 12px;
@@ -631,53 +604,116 @@ html, body {
     text-overflow: ellipsis;
 }
 
-/* ---------- тосты ---------- */
+/* ---------- сигнальная строка (вместо тостов) ---------- */
 
-.toasts {
+.signals {
     position: absolute;
-    top: 140px;
+    top: 78px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 800;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    align-items: center;
     pointer-events: none;
-    width: max-content;
     max-width: calc(100vw - 24px);
 }
 
-.toast {
-    background: rgba(14, 19, 17, 0.94);
+.signal {
+    background: rgba(14, 19, 17, 0.9);
     border: 1px solid var(--line);
-    border-left: 3px solid var(--ok);
-    padding: 9px 15px;
-    font-size: 12px;
-    color: var(--ink);
-    border-radius: 12px;
-    animation: toastIn 0.3s ease both;
-    max-width: 460px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
-@keyframes toastIn { from { opacity: 0; transform: translateY(-10px) scale(0.96); } to { opacity: 1; transform: none; } }
-
-.toast-kind {
+    padding: 7px 14px;
     font-family: var(--font-data);
-    font-size: 8.5px;
-    letter-spacing: 0.2em;
-    color: var(--ink-faint);
-    margin-right: 9px;
-    font-weight: 700;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    color: var(--ink-dim);
+    border-radius: 99px;
+    animation: signalIn 0.25s ease both, signalOut 0.8s ease 5.5s both;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.signal.war { color: var(--war-hi); border-color: rgba(255, 90, 78, 0.45); }
+.signal.capture { color: var(--phos); border-color: var(--line-lit); }
+.signal.build { color: var(--ice); }
+.signal.army { color: var(--ok); }
+
+@keyframes signalIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes signalOut { to { opacity: 0; } }
+
+/* ---------- FX на карте: вместо текстовых уведомлений ---------- */
+
+.fx-wrap { background: transparent; border: none; overflow: visible; pointer-events: none; }
+
+.fx { position: absolute; left: 50%; top: 50%; width: 160px; height: 160px; transform: translate(-50%, -50%); }
+.fx i, .fx b {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 14px; height: 14px;
+    transform: translate(-50%, -50%);
+    border-radius: 12px;
+    opacity: 0;
 }
 
-.toast.war { border-left-color: var(--war-hi); }
-.toast.warn { border-left-color: var(--warm); }
-.toast.capture { border-left-color: var(--phos); }
-.toast.army { border-left-color: var(--ok); }
-.toast.build { border-left-color: var(--ice); }
+/* захват земли: двойное кольцо + вспышка заливки */
+.fx-capture i {
+    border: 3px solid var(--phos);
+    box-shadow: 0 0 18px rgba(198, 242, 78, 0.5), inset 0 0 8px rgba(198, 242, 78, 0.3);
+    animation: fxRing 1.6s cubic-bezier(0.2, 0.75, 0.3, 1) forwards;
+}
+.fx-capture i:nth-child(2) { animation-delay: 0.45s; }
+.fx-capture b {
+    background: radial-gradient(circle, rgba(198, 242, 78, 0.5) 0%, rgba(198, 242, 78, 0.14) 45%, transparent 72%);
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    animation: fxFlash 1.4s ease-out forwards;
+}
+
+/* начало войны: тройные алые ударные кольца */
+.fx-war i {
+    border: 3px solid var(--war);
+    box-shadow: 0 0 20px rgba(255, 90, 78, 0.55);
+    animation: fxRing 2.4s cubic-bezier(0.15, 0.75, 0.25, 1) forwards;
+}
+.fx-war i:nth-child(2) { animation-delay: 0.35s; }
+.fx-war i:nth-child(3) { animation-delay: 0.7s; }
+.fx-war b {
+    background: radial-gradient(circle, rgba(255, 90, 78, 0.45) 0%, rgba(255, 90, 78, 0.12) 45%, transparent 72%);
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    animation: fxFlash 2s ease-out forwards;
+}
+
+/* завершение войны: мягкая дуга мира */
+.fx-peace i {
+    border: 2px dashed var(--ok);
+    animation: fxRing 1.8s cubic-bezier(0.25, 0.75, 0.35, 1) forwards;
+}
+
+/* новая постройка: маячок-поп */
+.fx-bld i {
+    width: 12px; height: 12px;
+    border-radius: 4px;
+    transform: translate(-50%, -50%) rotate(45deg) scale(1);
+    background: var(--ice);
+    box-shadow: 0 0 16px rgba(91, 212, 230, 0.8);
+    animation: fxPop 1.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+}
+
+@keyframes fxRing {
+    0% { width: 10px; height: 10px; opacity: 0.95; border-width: 3px; }
+    70% { opacity: 0.55; }
+    100% { width: 150px; height: 150px; opacity: 0; border-width: 1px; }
+}
+@keyframes fxFlash {
+    0% { opacity: 0.9; }
+    60% { opacity: 0.4; }
+    100% { opacity: 0; }
+}
+@keyframes fxPop {
+    0% { opacity: 0; transform: translate(-50%, -50%) rotate(45deg) scale(0.2); }
+    35% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -50%) rotate(45deg) scale(1.6); }
+}
 
 /* ---------- модальный брифинг ---------- */
 
@@ -799,7 +835,7 @@ html, body {
 @media (max-width: 1099px) {
     .top-stats { display: none; }
     .metric-strip { display: flex; }
-    .journal, .side { display: none; }
+    .side { display: none; }
     .fab-col { display: flex; }
     .dock { display: block; }
 
@@ -812,8 +848,7 @@ html, body {
     .clock { font-size: 12px; }
     .speed-btn { padding: 6px 9px; font-size: 10px; }
 
-    .toasts { top: 148px; width: 100%; }
-    .toast { max-width: calc(100vw - 24px); }
+    .signals { top: 146px; }
 
     /* крупные тач-таргеты */
     .war-actions { display: grid; grid-template-columns: 1fr 1fr; }
