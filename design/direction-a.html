@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Направление A — NIGHT OPS 2.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e10; --surface:rgba(16,22,25,.92); --surface-2:rgba(22,29,33,.94);
+  --line:rgba(220,255,230,.09); --line-lit:rgba(198,242,110,.35);
+  --ink:#e4efe0; --ink-dim:#7e9286; --ink-faint:#54655c;
+  --phos:#c6f24e; --phos-deep:#8fbf2e; --war:#ff5a4e; --warm:#f0b429; --ok:#5fc98d; --ice:#5bd4e6;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#111619;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:"JetBrains Mono",ui-monospace,monospace;padding:24px}
+/* телефон */
+.phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);flex:none}
+/* ---------- карта ---------- */
+.map{position:absolute;inset:0;background:
+  radial-gradient(1200px 700px at 30% 20%, #10312a 0%, transparent 55%),
+  radial-gradient(900px 600px at 80% 80%, #12241c 0%, transparent 60%),
+  linear-gradient(160deg,#0b1210,#0a0e10)}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.map-fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,14,16,.55) 0%,transparent 22%,transparent 62%,rgba(10,14,16,.88) 100%);pointer-events:none}
+/* ---------- статус-бар ---------- */
+.status{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:14px;padding:16px 18px 12px;z-index:10;background:linear-gradient(180deg,rgba(10,14,16,.92),rgba(10,14,16,0));backdrop-filter:blur(6px)}
+.brand{font-family:Unbounded;font-weight:800;font-size:11px;letter-spacing:.14em;color:var(--ink)}
+.brand em{font-style:normal;color:var(--phos)}
+.clock{margin-left:auto;font-size:11px;color:var(--ink-dim);letter-spacing:.08em}
+.spd{display:flex;border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.spd button{border:none;background:transparent;color:var(--ink-faint);font:600 10px "JetBrains Mono";padding:5px 9px;cursor:pointer}
+.spd button.on{background:var(--phos);color:#0c120c}
+/* ---------- метрики ---------- */
+.metrics{position:absolute;top:74px;left:12px;right:12px;display:flex;gap:8px;z-index:9}
+.metric{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:9px 12px;backdrop-filter:blur(12px)}
+.metric .v{font-size:17px;font-weight:700;color:var(--ink);line-height:1.1}
+.metric .v small{font-size:10px;color:var(--ink-faint);font-weight:400}
+.metric .k{font-size:8.5px;letter-spacing:.22em;color:var(--ink-dim);margin-top:4px}
+.metric.war .v{color:var(--war);text-shadow:0 0 14px rgba(255,90,78,.4)}
+.metric.land .v{color:var(--phos)}
+/* ---------- нижний док ---------- */
+.fab-col{position:absolute;right:14px;bottom:calc(64px + var(--sheet-h,178px) + 14px);display:flex;flex-direction:column;gap:10px;z-index:12;transition:bottom .3s cubic-bezier(.2,.9,.25,1.2)}
+.fab{width:54px;height:54px;border-radius:18px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-dim);display:flex;align-items:center;justify-content:center;font:700 15px "JetBrains Mono";backdrop-filter:blur(12px);cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.45);transition:.2s}
+.fab.march{background:linear-gradient(150deg,var(--phos),var(--phos-deep));color:#0c120c;border-color:transparent;box-shadow:0 0 24px rgba(198,242,78,.4)}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:11;--sheet-h:178px;background:var(--surface-2);border:1px solid var(--line);border-bottom:none;border-radius:22px 22px 0 0;backdrop-filter:blur(16px);box-shadow:0 -18px 50px rgba(0,0,0,.5)}
+.grab{width:44px;height:4px;border-radius:99px;background:rgba(255,255,255,.18);margin:9px auto 0}
+.tabs{display:flex;gap:4px;padding:10px 14px 0}
+.tab{flex:1;border:none;background:transparent;color:var(--ink-faint);font:600 10.5px "JetBrains Mono";letter-spacing:.14em;padding:9px 0;border-radius:10px;cursor:pointer}
+.tab.on{color:#0c120c;background:var(--phos)}
+.tab .n{opacity:.55;font-weight:400;margin-left:4px}
+.sheet-body{padding:12px 14px 16px;max-height:52vh;overflow:auto}
+/* война-карточка */
+.war{border:1px solid rgba(255,90,78,.35);background:rgba(255,90,78,.06);border-radius:14px;padding:11px 12px;margin-bottom:9px}
+.war-h{display:flex;align-items:baseline;gap:8px}
+.war-h .nm{font-family:Unbounded;font-weight:500;font-size:11.5px;color:var(--war);letter-spacing:.04em}
+.war-h .tm{margin-left:auto;font-size:10px;color:var(--warm)}
+.war-sub{font-size:9.5px;color:var(--ink-dim);margin:4px 0 8px;letter-spacing:.04em}
+.row{display:flex;align-items:center;gap:7px;font-size:10.5px;padding:2.5px 0;color:var(--ink)}
+.dot{width:8px;height:8px;border-radius:2px;transform:rotate(45deg);flex:none}
+.cbar{margin-left:auto;width:52px;height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.cbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--phos),var(--warm),var(--war))}
+.cv{font-size:10px;color:var(--ink-faint)}
+.war-actions{display:flex;gap:7px;margin-top:9px}
+.wbtn{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:10px;padding:10px 6px;color:var(--ink);font:600 10px "JetBrains Mono";letter-spacing:.08em;cursor:pointer}
+.wbtn.hot{border-color:rgba(255,90,78,.5);color:var(--war)}
+/* маршрут-HUD */
+.mhud{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sheet-h,178px) + 26px);z-index:12;background:rgba(12,17,14,.9);border:1px solid rgba(198,242,78,.7);color:var(--phos);font:600 10.5px "JetBrains Mono";letter-spacing:.1em;padding:10px 16px;border-radius:99px;backdrop-filter:blur(10px);box-shadow:0 0 30px rgba(198,242,78,.25)}
+.mhud b{color:#fff;font-weight:700}
+.mhud span{color:var(--ink-faint)}
+/* тост */
+.toasts{position:absolute;top:150px;left:0;right:0;display:flex;justify-content:center;z-index:20;pointer-events:none}
+.toast{background:rgba(14,19,17,.94);border:1px solid var(--line-lit);border-radius:12px;padding:9px 16px;font:500 11px "JetBrains Mono";color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.toast b{color:var(--phos);font-weight:700;letter-spacing:.14em;font-size:9px;margin-right:8px}
+.badge{display:inline-block;font-size:8px;letter-spacing:.2em;color:#0c120c;background:var(--phos);border-radius:4px;padding:2px 6px;font-weight:700}
+/* маршруты на svg карте */
+.route{fill:none;stroke:var(--phos);stroke-width:2.6;stroke-dasharray:7 7;stroke-linecap:round;animation:dash 1.2s linear infinite;filter:drop-shadow(0 0 4px rgba(198,242,78,.6))}
+.routefill{fill:none;stroke:var(--phos);stroke-width:1;opacity:.25}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.wz{fill:rgba(255,90,78,.1);stroke:var(--war);stroke-width:2;stroke-dasharray:9 7;animation:dash 1.4s linear infinite}
+.terr{stroke-width:1.6;opacity:.75}
+.terr:hover{opacity:1}
+</style>
+</head>
+<body>
+<div class="phone">
+  <!-- карта -->
+  <div class="map">
+    <svg viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <pattern id="grid" width="46" height="46" patternUnits="userSpaceOnUse">
+          <path d="M46 0H0V46" fill="none" stroke="rgba(180,255,220,.045)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="390" height="844" fill="url(#grid)"/>
+      <path class="terr" fill="#8fbf2e" fill-opacity=".28" stroke="#c6f24e" d="M40 300 L150 260 L210 320 L170 420 L60 430 Z"/>
+      <path class="terr" fill="#3f9e8e" fill-opacity=".3" stroke="#5bd4e6" d="M240 180 L340 160 L370 260 L280 300 Z"/>
+      <path class="terr" fill="#8a6db0" fill-opacity=".3" stroke="#c084fc" d="M30 520 L120 490 L150 580 L60 620 Z"/>
+      <path class="wz" d="M200 430 L310 400 L350 490 L260 530 Z"/>
+      <path class="route" d="M70 360 Q120 300 165 330 Q200 350 195 395 Q150 445 95 400 Q68 382 70 360 Z"/>
+    </svg>
+    <div class="map-fade"></div>
+  </div>
+
+  <!-- статус -->
+  <div class="status">
+    <div class="brand">SANY <em>TOTAL WAR</em></div>
+    <div class="spd"><button>×1</button><button>×60</button><button class="on">×600</button></div>
+    <div class="clock">14:52</div>
+  </div>
+
+  <!-- метрики -->
+  <div class="metrics">
+    <div class="metric land"><div class="v">3.42<small> км²</small></div><div class="k">ЗЕМЛЯ</div></div>
+    <div class="metric"><div class="v">148<small>/211</small></div><div class="k">АРМИЯ</div></div>
+    <div class="metric war"><div class="v">2</div><div class="k">ВОЙНЫ</div></div>
+  </div>
+
+  <!-- тост -->
+  <div class="toasts"><div class="toast"><b>ЗАХВАТ</b> Петля замкнута: +0.18 км² · +12 солдат</div></div>
+
+  <!-- марш HUD -->
+  <div class="mhud">МАРШ · <b>412 м</b> · <span>замкните петлю</span></div>
+
+  <!-- FAB -->
+  <div class="fab-col">
+    <button class="fab march" title="Марш">◈</button>
+    <button class="fab" title="Слои">≡</button>
+    <button class="fab" title="Центр">◎</button>
+  </div>
+
+  <!-- док -->
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="tabs">
+      <button class="tab on">ВОЙНЫ <span class="n">2</span></button>
+      <button class="tab">ДОСЬЕ</button>
+      <button class="tab">СВОДКИ</button>
+    </div>
+    <div class="sheet-body">
+      <div class="war">
+        <div class="war-h"><span class="nm">БИТВА ЗА РАВНИНУ</span><span class="tm">21:14</span></div>
+        <div class="war-sub">зона 0.8 км² · 3 стороны · ваши войска: 44</div>
+        <div class="row"><span class="dot" style="background:#c6f24e"></span>ВЫ<b class="cv">44</b><span class="cv">C=0.62</span><span class="cbar"><i style="width:62%"></i></span></div>
+        <div class="row"><span class="dot" style="background:#ff5a4e"></span>СЕВЕРНЫЙ ЛЕГИОН<b class="cv">61</b><span class="cv">C=0.41</span><span class="cbar"><i style="width:41%"></i></span></div>
+        <div class="row"><span class="dot" style="background:#5bd4e6"></span>ПОРТ-клан<b class="cv">12</b><span class="cv">C=0.18</span><span class="cbar"><i style="width:18%"></i></span></div>
+        <div class="war-actions">
+          <button class="wbtn hot">ПОДКРЕПЛЕНИЕ</button>
+          <button class="wbtn">ОТСТУПИТЬ 44</button>
+        </div>
+      </div>
+      <div class="row" style="color:var(--ink-dim);font-size:10px;letter-spacing:.06em"><span class="dot" style="background:#ff5a4e"></span>СТЫЧКА У МОСТА · очки 3/7 · войдите 🔷</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -24,6 +24,8 @@
 
     <SidePanel World="Vm" />
 
+    <MobileDock World="Vm" />
+
     <div class="walk-hud" id="walk-hud" style="display:none"></div>
 
     <div class="toasts">
@@ -240,7 +242,14 @@
     public async Task OnTerritoryClicked(string idStr)
     {
         if (Guid.TryParse(idStr, out var id))
+        {
             Ui.SelectedTerritoryId = id == Ui.SelectedTerritoryId ? null : id;
+            if (id != Guid.Empty)
+            {
+                Ui.DockTab = "dossier";
+                Ui.DockOpen = true;
+            }
+        }
         _vm = BuildSnapshot();
         await InvokeAsync(StateHasChanged);
     }

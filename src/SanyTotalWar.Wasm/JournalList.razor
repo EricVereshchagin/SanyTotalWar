@@ -1,0 +1,19 @@
+@using SanyTotalWar.Wasm.Services
+
+<div class="journal-list">
+    @foreach (var e in Enumerable.Reverse(World.Journal).Take(60).Reverse())
+    {
+        <div class="journal-item @(e.Kind)">
+            <span class="j-time">@e.Time.ToString("HH:mm")</span>
+            <span class="j-text">@e.Message</span>
+        </div>
+    }
+    @if (World.Journal.Count == 0)
+    {
+        <div class="journal-item system"><span class="j-text">Тишина на фронте…</span></div>
+    }
+</div>
+
+@code {
+    [Parameter] public required WorldVm World { get; set; }
+}

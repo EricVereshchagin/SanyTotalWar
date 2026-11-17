@@ -1,0 +1,74 @@
+@using SanyTotalWar.Wasm.Services
+@inject UiState Ui
+
+<div class="dock">
+    <MapFab />
+
+    <button class="dock-grab" @onclick="() => Ui.DockOpen = !Ui.DockOpen" aria-label="Развернуть или свернуть панель"></button>
+
+    <div class="dock-tabs">
+        <button class="dock-tab @(Ui.DockTab == "wars" ? "on" : "")" @onclick='() => SetTab("wars")'>
+            ВОЙНЫ<span class="n">@ActiveWars</span>
+        </button>
+        <button class="dock-tab @(Ui.DockTab == "dossier" ? "on" : "")" @onclick='() => SetTab("dossier")'>
+            ДОСЬЕ
+        </button>
+        <button class="dock-tab @(Ui.DockTab == "journal" ? "on" : "")" @onclick='() => SetTab("journal")'>
+            СВОДКИ
+        </button>
+    </div>
+
+    @if (Ui.DockOpen)
+    {
+        <div class="dock-body">
+            @switch (Ui.DockTab)
+            {
+                case "wars":
+                    @if (ActiveWars > 0)
+                    {
+                        foreach (var war in World.Wars.Where(w => !w.Ended).Take(4))
+                        {
+                            <WarCard War="war" />
+                        }
+                    }
+                    else
+                    {
+                        <div class="dock-empty">Мир пока не нарушен. Замкните петлю поверх чужой земли, чтобы объявить войну (UC-06).</div>
+                    }
+                    break;
+
+                case "dossier":
+                    @if (Sel is null)
+                    {
+                        <div class="dock-empty">
+                            <b>◈ Марш:</b> кнопка МАРШ, затем ведите пальцем и замкните петлю.<br />
+                            <b>◉ Тап по территории</b> — досье и приказы.
+                        </div>
+                    }
+                    else
+                    {
+                        <TerritoryCard Terr="Sel" />
+                    }
+                    break;
+
+                case "journal":
+                    <JournalList World="World" />
+                    break;
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public required WorldVm World { get; set; }
+
+    private TerrVm? Sel => World.Territories.FirstOrDefault(t => t.Id == Ui.SelectedTerritoryId);
+
+    private int ActiveWars => World.Wars.Count(w => !w.Ended);
+
+    private void SetTab(string tab)
+    {
+        Ui.DockTab = tab;
+        Ui.DockOpen = true;
+    }
+}

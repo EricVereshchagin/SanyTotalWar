@@ -16,6 +16,9 @@ public sealed class UiState
     public Guid? SelectedTerritoryId { get; set; }
     public double GameSpeed { get; set; } = 600;
     public bool ShowBriefing { get; set; } = true;
+    public bool MarchMode { get; set; }
+    public bool DockOpen { get; set; } = true;
+    public string DockTab { get; set; } = "dossier";
     private readonly List<ToastItem> _toasts = new();
     public IReadOnlyList<ToastItem> Toasts => _toasts;
 

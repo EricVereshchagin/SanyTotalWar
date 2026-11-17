@@ -3,6 +3,9 @@
     let dotnet = null;
     let trackLine = null;
     let drawing = false;
+    let touchDrawing = false;
+    let marchMode = false;
+    let isTouch = false;
     let panDrag = false;
     let prevPan = null;
     let lastVersion = -1;
@@ -10,13 +13,20 @@
     const gTerr = () => L.layerGroup().addTo(map);
     let gTerritory, gWars, gPoints, gWalk, gTracks;
 
-    const BLD_GLYPHS = { 'c': ['В', '#e8b23d'], 'f': ['К', '#d8483b'], 'a': ['А', '#6aa3b8'], 'b': ['Б', '#7ba05b'] };
+    const PHOS = '#c6f24e', WAR = '#ff5a4e';
+    const BLD_GLYPHS = { 'c': ['В', '#c6f24e'], 'f': ['К', '#ff5a4e'], 'a': ['А', '#5bd4e6'], 'b': ['Б', '#5fc98d'] };
+
+    function dockOffset() {
+        const d = document.querySelector('.dock');
+        return d ? d.offsetHeight : 0;
+    }
 
     function hud(text) {
         const el = document.getElementById('walk-hud');
         if (!el) return;
         if (!text) { el.style.display = 'none'; return; }
         el.style.display = 'block';
+        el.style.bottom = (dockOffset() + 26) + 'px';
         el.textContent = text;
     }
 
@@ -26,6 +36,51 @@
         for (const h of (holes || [])) out.push(h.map(p => [p[0], p[1]]));
         return out;
     }
+
+    // ---- трек маршрута (общее для мыши и тача) ----
+
+    function startTrack() {
+        drawing = true;
+        trackLine = L.polyline([], {
+            color: PHOS, weight: 3.5, dashArray: '7 7', opacity: 0.95,
+            lineCap: 'round'
+        }).addTo(gWalk);
+        hud('МАРШ · 0 м · замкните петлю');
+    }
+
+    function pushTrackPoint(latlng) {
+        if (!trackLine || !map) return;
+        const latlngs = trackLine.getLatLngs();
+        const last = latlngs.length ? latlngs[latlngs.length - 1] : null;
+        if (!last || map.distance(last, latlng) > 4) {
+            trackLine.addLatLng(latlng);
+            let meters = 0;
+            for (let i = 1; i < latlngs.length; i++) meters += map.distance(latlngs[i - 1], latlngs[i]);
+            hud(`МАРШ · ${Math.round(meters)} м · ~${Math.floor(meters / 25)} солдат · замкните петлю`);
+        }
+    }
+
+    function cancelTrack() {
+        drawing = false;
+        if (trackLine) { gWalk.removeLayer(trackLine); trackLine = null; }
+        hud(null);
+    }
+
+    function finishTrack() {
+        drawing = false;
+        const pts = trackLine ? trackLine.getLatLngs().map(a => [a.lat, a.lng]) : [];
+        if (trackLine) { gWalk.removeLayer(trackLine); trackLine = null; }
+        hud(null);
+        if (pts.length >= 6) dotnet.invokeMethodAsync('OnTrackCompleted', pts);
+    }
+
+    function latlngFromClient(cx, cy) {
+        const el = map.getContainer();
+        const rect = el.getBoundingClientRect();
+        return map.containerPointToLatLng(L.point(cx - rect.left, cy - rect.top));
+    }
+
+    // ---- рендер мира ----
 
     function render(state) {
         if (!map) return;
@@ -78,12 +133,12 @@
             const latlngs = ringsToLatLngs(w.rings, []);
             const glow = L.polygon(latlngs, {
                 stroke: false,
-                fillColor: '#ff4d3a',
+                fillColor: WAR,
                 fillOpacity: 0.16,
                 className: 'war-glow'
             });
             const zone = L.polygon(latlngs, {
-                color: '#ff5040',
+                color: WAR,
                 weight: 2.5,
                 dashArray: '9 7',
                 fillOpacity: 0.08,
@@ -124,17 +179,23 @@
     window.sanyMap = {
         init: function (dotnetRef, cfg) {
             dotnet = dotnetRef;
+            // настоящий тач: primary input — палец. L.Browser.touch врёт на
+            // десктопах с тачскрином, из-за чего ЛКМ начинает панировать.
+            isTouch = ('ontouchstart' in window)
+                && navigator.maxTouchPoints > 0
+                && window.matchMedia('(pointer: coarse)').matches;
             map = L.map('map', {
                 center: [cfg.lat, cfg.lng],
                 zoom: cfg.zoom,
                 zoomControl: false,
                 attributionControl: true,
-                dragging: false,
-                touchZoom: false,
+                dragging: isTouch,          // тач: панорама одним пальцем
+                touchZoom: isTouch,         // тач: пинч
                 doubleClickZoom: true,
                 boxZoom: false,
                 keyboard: false,
-                scrollWheelZoom: true
+                scrollWheelZoom: true,
+                tapHold: true
             });
             gTerritory = gTerr();
             gWars = gTerr();
@@ -153,19 +214,18 @@
             });
             osm.addTo(map);
 
-            L.control.layers({ 'Военная схема': osm, 'Спутник': sat }, null, { position: 'bottomleft' }).addTo(map);
+            L.control.layers({ 'Ночная съёмка': osm, 'Спутник': sat }, null, { position: 'bottomleft' }).addTo(map);
 
             L.control.zoom({ position: 'bottomright' }).addTo(map);
 
             const el = map.getContainer();
+            el.style.touchAction = 'none';
             el.addEventListener('contextmenu', e => e.preventDefault());
+
+            // --- мышь: ЛКМ = маршрут, ПКМ = панорама ---
             el.addEventListener('mousedown', e => {
                 if (e.button === 0) {
-                    drawing = true;
-                    trackLine = L.polyline([], {
-                        color: '#f0b429', weight: 3.5, dashArray: '7 7', opacity: 0.95
-                    }).addTo(gWalk);
-                    hud('МАРШ · 0 м · замкните петлю ЛКМ зажатой');
+                    startTrack();
                 } else if (e.button === 2) {
                     panDrag = true;
                     prevPan = { x: e.clientX, y: e.clientY };
@@ -181,17 +241,7 @@
                     map.panBy([-dx, -dy], { animate: false });
                     return;
                 }
-                if (drawing && trackLine && map) {
-                    const p = map.mouseEventToLatLng(e);
-                    const latlngs = trackLine.getLatLngs();
-                    const last = latlngs.length ? latlngs[latlngs.length - 1] : null;
-                    if (!last || map.distance(last, p) > 4) {
-                        trackLine.addLatLng(p);
-                        let meters = 0;
-                        for (let i = 1; i < latlngs.length; i++) meters += map.distance(latlngs[i - 1], latlngs[i]);
-                        hud(`МАРШ · ${Math.round(meters)} м · ~${Math.floor(meters / 25)} солдат · замкните петлю или вернитесь к своей границе`);
-                    }
-                }
+                if (drawing && trackLine && map) pushTrackPoint(map.mouseEventToLatLng(e));
             });
 
             window.addEventListener('mouseup', e => {
@@ -199,17 +249,54 @@
                     panDrag = false;
                     el.style.cursor = '';
                 }
-                if (drawing) {
-                    drawing = false;
-                    const pts = trackLine ? trackLine.getLatLngs().map(a => [a.lat, a.lng]) : [];
-                    if (trackLine) {
-                        gWalk.removeLayer(trackLine);
-                        trackLine = null;
-                    }
-                    hud(null);
-                    if (pts.length >= 6) dotnet.invokeMethodAsync('OnTrackCompleted', pts);
-                }
+                if (drawing && e.button === 0) finishTrack();
             });
+
+            // --- тач: режим марша = один палец ведёт маршрут ---
+            el.addEventListener('touchstart', e => {
+                if (marchMode && e.touches.length === 1 && !touchDrawing) {
+                    e.preventDefault();
+                    touchDrawing = true;
+                    startTrack();
+                }
+            }, { passive: false });
+
+            el.addEventListener('touchmove', e => {
+                if (touchDrawing && marchMode && e.touches.length === 1) {
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    pushTrackPoint(latlngFromClient(t.clientX, t.clientY));
+                }
+            }, { passive: false });
+
+            const endTouch = e => {
+                if (touchDrawing) {
+                    e.preventDefault();
+                    touchDrawing = false;
+                    finishTrack();
+                }
+            };
+            el.addEventListener('touchend', endTouch, { passive: false });
+            el.addEventListener('touchcancel', endTouch, { passive: false });
+        },
+
+        // включение/выключение режима марша (FAB)
+        setMarchMode: function (on) {
+            marchMode = on;
+            if (!map) return;
+            if (on) {
+                map.dragging.disable();
+                map.touchZoom.disable();
+                map.doubleClickZoom.disable();
+            } else {
+                cancelTrack();
+                touchDrawing = false;
+                if (isTouch) {
+                    map.dragging.enable();
+                    map.touchZoom.enable();
+                    map.doubleClickZoom.enable();
+                }
+            }
         },
 
         pushState: function (json) {

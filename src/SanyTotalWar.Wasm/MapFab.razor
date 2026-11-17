@@ -1,0 +1,25 @@
+@using SanyTotalWar.Wasm.Services
+@inject UiState Ui
+@inject IJSRuntime Js
+
+<div class="fab-col">
+    <button class="fab march @(Ui.MarchMode ? "on" : "")" title="Режим марша: одним пальцем — маршрут, двумя — карта"
+            @onclick="ToggleMarch">
+        <span>@(Ui.MarchMode ? "◉" : "◈")</span>
+        <small>МАРШ</small>
+    </button>
+    <button class="fab" title="Брифинг и правила" @onclick="() => Ui.ShowBriefing = true">
+        <span>≡</span>
+        <small>ИНФО</small>
+    </button>
+</div>
+
+@code {
+    private async Task ToggleMarch()
+    {
+        Ui.MarchMode = !Ui.MarchMode;
+        if (Ui.MarchMode) Ui.DockOpen = false;
+        try { await Js.InvokeVoidAsync("sanyMap.setMarchMode", Ui.MarchMode); }
+        catch (JSDisconnectedException) { }
+    }
+}

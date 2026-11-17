@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SANY TOTAL WAR — сравнение дизайн-дирекций</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Segoe UI",system-ui,sans-serif;background:#15181c;color:#dde3d8;min-height:100vh;padding:36px 30px 60px}
+h1{font-size:20px;letter-spacing:.24em;font-weight:800;margin-bottom:6px}
+h1 span{color:#c6f24e}
+.sub{font-size:12.5px;color:#8a9480;max-width:760px;line-height:1.65;margin-bottom:34px}
+.sub b{color:#c9d3bb}
+.grid{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start}
+.dir{width:390px}
+.dir h2{font-size:13px;letter-spacing:.18em;margin:0 0 3px}
+.dir h2 span{color:#9aa794;font-weight:400;font-size:11px;letter-spacing:.08em;margin-left:8px}
+.dir p{font-size:11.5px;color:#8a9480;line-height:1.6;margin-bottom:12px}
+.frame{width:390px;height:844px;border-radius:44px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.08);border:none;position:relative;display:block}
+.tag{display:inline-block;font-size:9px;letter-spacing:.2em;border:1px solid #3c4636;color:#9aa794;padding:3px 8px;border-radius:99px;margin:10px 6px 0 0}
+.tag.rec{border-color:#c6f24e;color:#c6f24e}
+</style>
+</head>
+<body>
+<h1>SANY TOTAL WAR <span>· УХ/UI ОБНОВА · 2026</span></h1>
+<p class="sub">Три дирекции одного продукта — geo-LBS-стратегия по захвату реальных земель на пешем маршруте. <b>Категория</b>: LBS-стратегия; <b>пиры</b>: Pokémon GO (лёгкость на улице), картографические штабные планшеты, мобильные 4X. Общий UX-скелет: статус-бар → метрики → карта → нижний док с вкладками (войны / досье / сводка) + FAB-кнопка марша. Различия — тон, типографика, композиция карты. Выбор ваш; правки вносятся в соответствующий <b>direction-X.html</b>.</p>
+
+<div class="grid">
+  <div class="dir">
+    <h2>A · NIGHT OPS 2.6 <span>рекомендация</span></h2>
+    <p>Тёмный «полевой планшет»: графит + фосфорный лайм, моно-телеметрия JetBrains Mono, Unbounded в заголовках. Один запоминающийся момент — HUD замыкания петли маршрута; войны пульсируются дозированно. Максимально читаем на солнце за счёт контраста акцентов.</p>
+    <span class="tag rec">РЕКОМЕНДУЮ</span><span class="tag">тёмная тема</span><span class="tag">контраст №1</span><span class="tag">ночной стиль</span>
+    <iframe class="frame" src="direction-a.html"></iframe>
+  </div>
+
+  <div class="dir">
+    <h2>B · КАРТА ШТАБА <span>самая уникальная</span></h2>
+    <p>Светлая «бумага генштаба»: кость, чернильные линии, оттиски-штампы, штриховка высот. Сильнее всех отстроена от жанра — никто из мобильных LBS-игр так не выглядит. Риск: на солнце бледнее, тёмная тема потребует отдельной ветки.</p>
+    <span class="tag">светлая тема</span><span class="tag">уникальность №1</span><span class="tag">ретро-военный</span>
+    <iframe class="frame" src="direction-b.html"></iframe>
+  </div>
+
+  <div class="dir">
+    <h2>C · GEO CASUAL <span>самая массовая</span></h2>
+    <p>Лёгкий дружелюбный тон под массовую аудиторию ближе к Pokémon GO: белые карточки-капсулы, градиентные FAB, крупные тап-таргеты, живая микроанимация. Самый доступный онбординг, наименее «военный».</p>
+    <span class="tag">светлая тема</span><span class="tag">массовость №1</span><span class="tag">казуальный онбординг</span>
+    <iframe class="frame" src="direction-c.html"></iframe>
+  </div>
+</div>
+</body>
+</html>
