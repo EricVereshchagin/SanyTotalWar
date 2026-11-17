@@ -4,8 +4,8 @@
 <div class="dock @(Ui.DockOpen ? "" : "collapsed")">
     <MapFab />
 
-    <div class="dock-tabs" title="Нажми — свернуть/развернуть" @onclick="() => Ui.DockOpen = !Ui.DockOpen">
-        <span class="dock-grab" aria-hidden="true"></span>
+    <div class="dock-tabs" title="Свернуть/развернуть" @onclick="() => Ui.DockOpen = !Ui.DockOpen">
+        <span class="dock-chev @(Ui.DockOpen ? "" : "up")" aria-hidden="true"></span>
         <button class="dock-tab @(Ui.DockTab == "wars" ? "on" : "")" @onclick='() => SetTab("wars")' @onclick:stopPropagation="true">
             ВОЙНЫ<span class="n">@ActiveWars</span>
         </button>

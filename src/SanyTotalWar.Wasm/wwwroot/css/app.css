@@ -689,21 +689,36 @@ html, body {
 /* FAB-РєРЅРѕРїРєРё Р¶РёРІСѓС‚ РІРЅСѓС‚СЂРё РґРѕРєР° вЂ” СЂР°СЃС‚СѓС‚ РЅР°Рґ РЅРёРј Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё */
 .dock > .fab-col { display: flex; bottom: 100%; margin-bottom: 14px; }
 
-.dock-tabs { display: flex; gap: 4px; padding: 12px 12px 0; align-items: center; }
-.dock-grab {
-    display: block;
+.dock-tabs { display: flex; gap: 10px; padding: 14px 12px 0; align-items: center; }
+
+/* явный шеврон «свернуть/развернуть», по центру строки с вкладками */
+.dock-chev {
     flex: none;
-    margin-left: 4px;
-    width: 34px;
-    height: 8px;
+    width: 22px;
+    height: 22px;
     border-radius: 99px;
-    background: rgba(255, 255, 255, 0.22);
-    transition: background 0.18s;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.25s ease, background 0.18s, border-color 0.18s;
 }
-.dock-tabs:hover .dock-grab { background: var(--phos); }
+.dock-chev::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid var(--ink-dim);
+    border-bottom: 2px solid var(--ink-dim);
+    transform: rotate(45deg) translate(-1px, -1px);
+}
+.dock-tabs:hover .dock-chev { background: rgba(198, 242, 78, 0.12); border-color: var(--line-lit); }
+.dock-tabs:hover .dock-chev::after { border-color: var(--phos); }
+.dock-chev.up { transform: rotate(180deg); }
 @media (max-width: 1099px) {
-    .dock-grab { position: absolute; top: 0; left: 50%; transform: translateX(-50%); margin: 10px 0 0; }
-    .dock-tabs { padding-top: 24px; }
+    .dock-chev { position: absolute; top: 0; left: 50%; transform: translate(-50%, 6px); }
+    .dock-chev.up { transform: translate(-50%, 6px) rotate(180deg); }
+    .dock-tabs { padding-top: 26px; }
 }
 
 .dock-tab {
