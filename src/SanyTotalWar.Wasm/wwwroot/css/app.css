@@ -814,14 +814,15 @@ html, body {
 .leaflet-interactive:active { outline: none; }
 
 .terr {
-    transition: fill-opacity 0.25s ease, stroke-width 0.25s ease, filter 0.25s ease;
+    transition: filter 0.18s ease, fill-opacity 0.25s ease, stroke-width 0.25s ease;
     pointer-events: visiblePainted;
 }
-.terr:hover,
+/* ховер: простое затемнение, без свечений */
+.terr:hover { filter: brightness(0.78); }
 .terr.sel {
     fill-opacity: 0.5;
     stroke-width: 4.5px;
-    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(198, 242, 78, 0.28));
+    filter: brightness(0.88);
 }
 
 /* тултип = краткое досье территории */

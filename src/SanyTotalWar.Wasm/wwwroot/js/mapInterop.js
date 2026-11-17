@@ -123,7 +123,29 @@
             : m2.toLocaleString('ru-RU') + ' м²';
     }
 
-    // краткое досье территории — тултип при наведении
+    // краткое досье территории — отдельный тултип, открывается кликом
+    let terrTip = null;
+
+    function closeTerrTip() {
+        if (terrTip) {
+            try { map.removeLayer(terrTip); } catch (e) { }
+            terrTip = null;
+        }
+    }
+
+    function showTerrTip(t, latlng) {
+        closeTerrTip();
+        terrTip = L.tooltip({
+            className: 'war-tip',
+            direction: 'top',
+            offset: [0, -10],
+            opacity: 1,
+            interactive: false,
+            sticky: false
+        }).setContent(terrTipHtml(t)).setLatLng(latlng).addTo(map);
+    }
+
+    // краткое досье территории — разметка
     function terrTipHtml(t) {
         const army = t.army ?? 0;
         const limit = t.limit ?? 0;
@@ -231,12 +253,11 @@
                     className: 'terr',
                     bubblingMouseEvents: false
                 });
-                poly.on('click', () => dotnet.invokeMethodAsync('OnTerritoryClicked', t.id));
-                poly.bindTooltip(terrTipHtml(t), {
-                    direction: 'top',
-                    className: 'war-tip',
-                    offset: [0, -8],
-                    opacity: 1
+                // досье открывается кликом, а не наведением
+                poly.on('click', e => {
+                    if (t.selected) { closeTerrTip(); }
+                    else { showTerrTip(t, e.latlng); }
+                    dotnet.invokeMethodAsync('OnTerritoryClicked', t.id);
                 });
                 gTerritory.addLayer(poly);
                 if (t.selected && poly._path) poly._path.classList.add('sel');
@@ -372,6 +393,9 @@
             const el = map.getContainer();
             el.style.touchAction = 'none';
             el.addEventListener('contextmenu', e => e.preventDefault());
+
+            // клик по пустому месту карты закрывает досье-тултип
+            map.on('click', closeTerrTip);
 
             // ховер при зуме не работает; рендер откладывается до конца зума
             map.on('zoomstart', () => {
