@@ -526,8 +526,15 @@ html, body {
 
 .dossier { padding: 0 0 10px; }
 
-.dossier-head { padding: 12px 14px 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.dossier-name { font-family: var(--font-display); font-weight: 500; font-size: 13px; }
+.dossier-head { padding: 14px 14px 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+.dossier-name {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.2;
+    word-break: break-word;
+}
+.dossier-head .tag.mine { margin-right: 0; }
 
 .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 0 14px; }
 .stat-cell { background: rgba(255, 255, 255, 0.035); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; text-align: center; }

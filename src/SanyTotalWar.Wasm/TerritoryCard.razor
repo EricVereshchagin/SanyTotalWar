@@ -7,13 +7,11 @@
 
 <div class="dossier">
     <div class="dossier-head">
-        <div class="dossier-icon" style="color:@Terr.OwnerColor">
-            @if (Terr.My)
-            {
-                <span class="tag mine">ВАША ЗЕМЛЯ</span>
-            }
-            <span class="dossier-name">@Terr.Name</span>
-        </div>
+        @if (Terr.My)
+        {
+            <span class="tag mine">ВАША ЗЕМЛЯ</span>
+        }
+        <div class="dossier-name" style="color:@Terr.OwnerColor">@Terr.Name</div>
     </div>
 
     <div class="stat-grid">
@@ -31,7 +29,7 @@
         </div>
     </div>
 
-    <div class="army-bar"><span style="width:@Bar"></span></div>
+    <div class="army-bar"><span style="width:@(Bar)%"></span></div>
 
     @if (Terr.My)
     {
