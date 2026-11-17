@@ -16,6 +16,7 @@
     // отложенный рендер: во время зум-анимации не пересоздаём векторы
     let renderPending = null;
     let zoomingNow = false;
+    let lastSelId = null;
 
     // дифф состояния для фоновых FX-анимаций
     let fxPrimed = false;          // первый кадр — только фиксируем базу, без анимаций
@@ -122,6 +123,17 @@
             : m2.toLocaleString('ru-RU') + ' м²';
     }
 
+    // краткое досье территории — тултип при наведении
+    function terrTipHtml(t) {
+        const army = t.army ?? 0;
+        const limit = t.limit ?? 0;
+        const bld = (t.buildings || []).length;
+        return `<div class="tip-terr"><div class="tip-terr-name">${t.name}</div>` +
+            `<div class="tip-terr-row">Владелец · ${t.owner || '?'}</div>` +
+            `<div class="tip-terr-row">${fmtArea(t.area || 0)} · армия ${army}/${limit}</div>` +
+            `<div class="tip-terr-row">${bld ? 'постройки: ' + bld : 'построек нет'} </div></div>`;
+    }
+
     function spawnFx(state) {
         const nowTerr = new Map(), nowWars = new Set(), nowCenters = new Map();
 
@@ -194,8 +206,10 @@
             renderPending = state;
             return;
         }
-        if (state.version === lastVersion) return;
+        var selChanged = (state.sel || null) !== lastSelId;
+        if (state.version === lastVersion && !selChanged) return;
         lastVersion = state.version;
+        lastSelId = state.sel || null;
 
         gTerritory.clearLayers();
         gWars.clearLayers();
@@ -214,15 +228,18 @@
                     weight: mine ? 3.5 : 2,
                     fillColor: t.color,
                     fillOpacity: mine ? 0.38 : 0.30,
+                    className: 'terr',
+                    bubblingMouseEvents: false
                 });
                 poly.on('click', () => dotnet.invokeMethodAsync('OnTerritoryClicked', t.id));
-                poly.bindTooltip(t.name, {
+                poly.bindTooltip(terrTipHtml(t), {
                     direction: 'top',
                     className: 'war-tip',
                     offset: [0, -8],
                     opacity: 1
                 });
                 gTerritory.addLayer(poly);
+                if (t.selected && poly._path) poly._path.classList.add('sel');
             }
 
             if (t.buildings && t.buildings.length && t.parts && t.parts.length) {

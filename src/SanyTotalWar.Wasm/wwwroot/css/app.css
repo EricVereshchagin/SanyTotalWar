@@ -808,18 +808,53 @@ html, body {
     50% { box-shadow: 0 0 14px rgba(240, 180, 41, 0.85); }
 }
 
+/* ---------- карта: фокус-рамки нет, территория «приподнимается" ---------- */
+
+.leaflet-interactive:focus,
+.leaflet-interactive:active { outline: none; }
+
+.terr {
+    transition: fill-opacity 0.25s ease, stroke-width 0.25s ease, filter 0.25s ease;
+    pointer-events: visiblePainted;
+}
+.terr:hover,
+.terr.sel {
+    fill-opacity: 0.5;
+    stroke-width: 4.5px;
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(198, 242, 78, 0.28));
+}
+
+/* тултип = краткое досье территории */
 .war-tip {
     background: rgba(12, 17, 14, 0.93) !important;
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 10px;
     color: var(--ink);
     font-family: var(--font-data);
     font-size: 11px;
-    letter-spacing: 0.06em;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-    padding: 5px 9px !important;
+    letter-spacing: 0.04em;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+    padding: 0 !important;
+    overflow: hidden;
+    min-width: 170px;
 }
 .war-tip::before { display: none !important; }
+
+.tip-terr { padding: 8px 11px 9px; }
+.tip-terr-name {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--phos);
+    letter-spacing: 0.03em;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--line);
+}
+.tip-terr-row { font-size: 9.5px; color: var(--ink-dim); line-height: 1.65; }
+
+/* во время зума тултипы полностью выключены */
+.zooming .war-tip { opacity: 0 !important; visibility: hidden !important; }
 
 /* во время зума тултипы полностью выключены */
 .zooming .war-tip { opacity: 0 !important; visibility: hidden !important; }

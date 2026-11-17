@@ -105,8 +105,7 @@
                     t.OwnerId == meId ? mineColor : owner?.ColorHex ?? "#999",
                     t.OwnerId == meId, Engine.AreaKm2(t), Engine.ArmyLimitOf(t), t.Army,
                     t.Buildings.Select(b => BuildingCatalog.All[b.Type]).ToList(),
-                    activeWars, t.Id == Ui.SelectedTerritoryId));
-            }
+                    activeWars, t.Id == Ui.SelectedTerritoryId));            }
 
             var wars = new List<WarVm>();
             foreach (var w in world.Wars.OrderByDescending(w => !w.Ended).ThenByDescending(w => w.StartedAtGameTime))
@@ -176,7 +175,11 @@
             name = t.Name,
             color = t.OwnerId == vm.MyId ? "#c6f24e" : colors.GetValueOrDefault(t.OwnerId, "#999"),
             mine = t.OwnerId == vm.MyId,
+            owner = world.PlayerById(t.OwnerId)?.Name ?? "?",
             area = Math.Round(Engine.AreaKm2(t), 4),
+            army = t.Army,
+            limit = Engine.ArmyLimitOf(t),
+            selected = t.Id == Ui.SelectedTerritoryId,
             parts = t.Parts
                 .Where(p => p.Exterior.Count >= 3)
                 .Select(p => RingsOf(new List<List<GeoPoint>> { p.Exterior }.Concat(p.Holes)))
@@ -213,7 +216,7 @@
             })
             .ToList();
 
-        var dto = new { version = vm.Version, territories = territoryDtos, wars, tracks };
+        var dto = new { version = vm.Version, territories = territoryDtos, wars, tracks, sel = Ui.SelectedTerritoryId?.ToString() ?? "" };
         return JsonSerializer.Serialize(dto, options);
     }
 
@@ -246,6 +249,7 @@
             }
         }
         _vm = BuildSnapshot();
+        await PushMap();
         await InvokeAsync(StateHasChanged);
     }
 
