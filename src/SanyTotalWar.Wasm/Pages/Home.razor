@@ -26,6 +26,14 @@
 
     <div class="walk-hud" id="walk-hud" style="display:none"></div>
 
+    <div class="dossier-float panel @(Sel is null ? "hidden" : "")" id="dossier-float">
+        @if (Sel is not null)
+        {
+            <button class="dossier-close" title="Закрыть досье" @onclick="CloseDossier">×</button>
+            <TerritoryCard Terr="Sel" />
+        }
+    </div>
+
     <BriefingModal />
 </div>
 
@@ -37,6 +45,25 @@
     private CancellationTokenSource? _cts;
 
     private WorldVm? Vm => _vm;
+
+    private TerrVm? Sel => _vm?.Territories.FirstOrDefault(t => t.Id == Ui.SelectedTerritoryId);
+
+    private async Task CloseDossier()
+    {
+        Ui.SelectedTerritoryId = null;
+        _vm = BuildSnapshot();
+        await PushMap();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task OnMapClicked()
+    {
+        Ui.SelectedTerritoryId = null;
+        _vm = BuildSnapshot();
+        await PushMap();
+        await InvokeAsync(StateHasChanged);
+    }
 
     protected override async Task OnInitializedAsync()
     {

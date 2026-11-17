@@ -131,11 +131,25 @@
             : m2.toLocaleString('ru-RU') + ' м²';
     }
 
-    // краткое досье территории — отдельный тултип, открывается кликом
-    let terrTip = null;
+    // краткое досье — плавающая Blazor-карточка у точки клика
+    let lastClickPx = null;
+
+    function positionDossier() {
+        if (!lastClickPx) return;
+        const card = document.getElementById('dossier-float');
+        if (!card) return;
+        const el = map.getContainer();
+        const rect = el.getBoundingClientRect();
+        let x = lastClickPx.x - rect.left;
+        let y = lastClickPx.y - rect.top;
+        const cardW = 320;
+        x = Math.max(12, Math.min(x + 16, rect.width - cardW - 12));
+        y = Math.max(12, Math.min(y - 40, rect.height - 160));
+        card.style.left = x + 'px';
+        card.style.top = y + 'px';
+    }
 
     // ---- режим установки постройки (клик из досье или drop с карточки) ----
-
     let placement = null; // { terrId, type }
     let ghostEl = null;
 
@@ -175,35 +189,8 @@
     }
 
     function closeTerrTip() {
-        if (terrTip) {
-            try { map.removeLayer(terrTip); } catch (e) { }
-            terrTip = null;
-        }
+        lastClickPx = null;
     }
-
-    function showTerrTip(t, latlng) {
-        closeTerrTip();
-        terrTip = L.tooltip({
-            className: 'war-tip',
-            direction: 'top',
-            offset: [0, -10],
-            opacity: 1,
-            interactive: false,
-            sticky: false
-        }).setContent(terrTipHtml(t)).setLatLng(latlng).addTo(map);
-    }
-
-    // краткое досье территории — разметка
-    function terrTipHtml(t) {
-        const army = t.army ?? 0;
-        const limit = t.limit ?? 0;
-        const bld = (t.buildings || []).length;
-        return `<div class="tip-terr"><div class="tip-terr-name">${t.name}</div>` +
-            `<div class="tip-terr-row">Владелец · ${t.owner || '?'}</div>` +
-            `<div class="tip-terr-row">${fmtArea(t.area || 0)} · армия ${army}/${limit}</div>` +
-            `<div class="tip-terr-row">${bld ? 'постройки: ' + bld : 'построек нет'} </div></div>`;
-    }
-
     function spawnFx(state) {
         const nowTerr = new Map(), nowWars = new Set(), nowCenters = new Map();
 
@@ -314,10 +301,9 @@
                         tryPlaceAt(e.latlng);
                         return;
                     }
-                    const d = entry.data;
-                    if (d && d.selected) { closeTerrTip(); }
-                    else { showTerrTip(d, e.latlng); }
-                    dotnet.invokeMethodAsync('OnTerritoryClicked', d.id);
+                    lastClickPx = { x: e.originalEvent.clientX, y: e.originalEvent.clientY };
+                    positionDossier();
+                    dotnet.invokeMethodAsync('OnTerritoryClicked', entry.data.id);
                 });
                     gTerritory.addLayer(poly);
                     entry.polys.push(poly);
@@ -507,17 +493,20 @@
             el.style.touchAction = 'none';
             el.addEventListener('contextmenu', e => e.preventDefault());
 
-            // клик по пустому месту карты закрывает досье-тултип / ставит вне зоны
+            // клик по пустому месту: снять выделение (и точку досье) / ставить вне зоны
             map.on('click', e => {
-                closeTerrTip();
-                if (placement) tryPlaceAt(e.latlng);
+                if (placement) { tryPlaceAt(e.latlng); return; }
+                if (lastSelId) dotnet.invokeMethodAsync('OnMapClicked');
             });
 
-            // режим установки постройки: призрак следует за курсором, Esc/ПКМ — отмена
+            // Esc: отмена установки; иначе закрыть досье
             document.addEventListener('keydown', e => {
-                if (e.key === 'Escape' && placement) {
+                if (e.key !== 'Escape') return;
+                if (placement) {
                     stopPlacement();
                     dotnet.invokeMethodAsync('OnPlacementCancelled');
+                } else if (lastSelId) {
+                    dotnet.invokeMethodAsync('OnMapClicked');
                 }
             });
             el.addEventListener('contextmenu', e => {
