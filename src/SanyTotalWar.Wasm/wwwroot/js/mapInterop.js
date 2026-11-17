@@ -14,7 +14,8 @@
     let gTerritory, gWars, gPoints, gWalk, gTracks, gFx;
 
     // дифф состояния для фоновых FX-анимаций
-    let seenTerr = new Map();      // id -> кол-во построек
+    let fxPrimed = false;          // первый кадр — только фиксируем базу, без анимаций
+    let seenTerr = new Map();      // id -> { bld, area }
     let seenWars = new Set();      // id активных войн
     let lastWarCenters = new Map();// id -> [lat,lng]
 
@@ -109,22 +110,44 @@
         return [la / ring.length, ln / ring.length];
     }
 
+    function fmtArea(a) {
+        if (a >= 0.05) return a.toFixed(2).replace('.', ',') + ' км²';
+        const m2 = Math.round(a * 1e6 / 10) * 10;
+        return m2 >= 1000
+            ? (m2 / 1000).toFixed(1).replace('.', ',') + ' тыс. м²'
+            : m2.toLocaleString('ru-RU') + ' м²';
+    }
+
     function spawnFx(state) {
         const nowTerr = new Map(), nowWars = new Set(), nowCenters = new Map();
 
         for (const t of state.territories) {
             const c = centroidOf(t);
             if (!c) continue;
-            nowTerr.set(t.id, (t.buildings || []).length);
-            const prevBld = seenTerr.get(t.id);
-            if (seenTerr.has(t.id)) {
-                // рост постройки на живой земле
-                if ((t.buildings || []).length > prevBld) {
+            const bld = (t.buildings || []).length;
+            const prev = seenTerr.get(t.id);
+            nowTerr.set(t.id, { bld, area: t.area || 0 });
+
+            if (!fxPrimed || prev === undefined) continue;
+
+            if (prev === null) {
+                // новая земля: всход кольца + чип «+площадь» внутри территории
+                fxMarker(c[0], c[1],
+                    `<div class="fx fx-capture"><i></i><i></i><b></b><s>+${fmtArea(t.area || 0)}</s></div>`, 3200);
+            } else {
+                const d = (t.area || 0) - prev.area;
+                if (d > 0.002) {
+                    // земля выросла (дуга/слияние)
+                    fxMarker(c[0], c[1],
+                        `<div class="fx fx-gain"><s>+${fmtArea(d)}</s></div>`, 2300);
+                } else if (d < -0.002) {
+                    // земля урезана войной/распадом
+                    fxMarker(c[0], c[1],
+                        `<div class="fx fx-loss"><s>−${fmtArea(-d)}</s></div>`, 2300);
+                }
+                if (bld > prev.bld) {
                     fxMarker(c[0], c[1], '<div class="fx fx-bld"></div>', 1800);
                 }
-            } else {
-                // новая земля — захват (всплеск + штамп-кольцо)
-                fxMarker(c[0], c[1], '<div class="fx fx-capture"><i></i><i></i><b></b></div>', 2600);
             }
         }
 
@@ -136,23 +159,26 @@
             const c = [la / ring.length, ln / ring.length];
             nowWars.add(w.id);
             nowCenters.set(w.id, c);
-            if (!seenWars.has(w.id)) {
-                // новая война — ударные кольца в зоне
-                fxMarker(c[0], c[1], '<div class="fx fx-war"><i></i><i></i><i></i><b></b></div>', 3200);
+            if (fxPrimed && !seenWars.has(w.id)) {
+                // новая война: ударные кольца + залп ⚔
+                fxMarker(c[0], c[1],
+                    '<div class="fx fx-war"><i></i><i></i><i></i><b></b><s>⚔</s></div>', 3400);
             }
         }
 
         for (const id of seenWars) {
             if (!nowWars.has(id) && lastWarCenters.has(id)) {
                 const c = lastWarCenters.get(id);
-                // война завершилась — мягкая дуга затухания
-                fxMarker(c[0], c[1], '<div class="fx fx-peace"><i></i></div>', 2200);
+                // война завершилась: дуга мира + галочка
+                fxMarker(c[0], c[1],
+                    '<div class="fx fx-peace"><i></i><s>✓</s></div>', 2500);
             }
         }
 
         seenTerr = nowTerr;
         seenWars = nowWars;
         lastWarCenters = nowCenters;
+        fxPrimed = true;
     }
 
     // ---- рендер мира ----
