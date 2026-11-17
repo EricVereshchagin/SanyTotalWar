@@ -13,6 +13,10 @@
     const gTerr = () => L.layerGroup().addTo(map);
     let gTerritory, gWars, gPoints, gWalk, gTracks, gFx;
 
+    // отложенный рендер: во время зум-анимации не пересоздаём векторы
+    let renderPending = null;
+    let zoomingNow = false;
+
     // дифф состояния для фоновых FX-анимаций
     let fxPrimed = false;          // первый кадр — только фиксируем базу, без анимаций
     let seenTerr = new Map();      // id -> { bld, area }
@@ -185,6 +189,11 @@
 
     function render(state) {
         if (!map) return;
+        // во время зум-анимации не пересоздаём слои — ждем zoomend
+        if (zoomingNow) {
+            renderPending = state;
+            return;
+        }
         if (state.version === lastVersion) return;
         lastVersion = state.version;
 
@@ -304,6 +313,11 @@
                 boxZoom: false,
                 keyboard: false,
                 scrollWheelZoom: true,
+                // плавный зум: четверть-левелы вместо стука целыми ступенями
+                zoomSnap: 0.25,
+                zoomDelta: 0.5,
+                wheelDebounceTime: 40,
+                zoomAnimation: true,
                 tapHold: true
             });
             gTerritory = gTerr();
@@ -332,9 +346,21 @@
             el.style.touchAction = 'none';
             el.addEventListener('contextmenu', e => e.preventDefault());
 
-            // ховер при зуме не работает: на время зума тултипы выключаются
-            map.on('zoomstart', () => el.classList.add('zooming'));
-            map.on('zoomend', () => el.classList.remove('zooming'));
+            // ховер при зуме не работает; рендер откладывается до конца зума
+            map.on('zoomstart', () => {
+                zoomingNow = true;
+                el.classList.add('zooming');
+            });
+            map.on('zoomend', () => {
+                zoomingNow = false;
+                el.classList.remove('zooming');
+                // применяем последнее состояние, отложенное из-за зума
+                if (renderPending) {
+                    const s = renderPending;
+                    renderPending = null;
+                    render(s);
+                }
+            });
 
             // --- мышь: ЛКМ = маршрут, ПКМ = панорама ---
             el.addEventListener('mousedown', e => {
