@@ -4,6 +4,25 @@
 
 > Живое демо: **https://ericvereshchagin.github.io/SanyTotalWar/** (Blazor WASM, деплой из ветки `main`)
 
+## Дизайн/UI (2026 · Night Ops)
+
+Текущая дирекция — «Night Ops 2.6»: графит + фосфорный лайм, моно-телеметрия (JetBrains Mono), заголовки Unbounded, стеклянные панели. Мобильный UX: нижний док с вкладками (войны/досье/сводки), метрики-капсулы, FAB-кнопка марша с тач-жестами.
+
+<p>
+  <img src="design/shots/direction-a.png" width="32%" alt="Night Ops 2.6" title="A · Night Ops 2.6 — внедрена">
+  <img src="design/shots/direction-b.png" width="32%" alt="Карта Штаба" title="B · Карта Штаба">
+  <img src="design/shots/direction-c.png" width="32%" alt="Geo Casual" title="C · Geo Casual">
+</p>
+
+Живые интерактивные макеты (открываются на Pages после деплоя):
+
+| Дирекция | Суть |
+|---|---|
+| **[A · Night Ops 2.6](https://ericvereshchagin.github.io/SanyTotalWar/design/direction-a.html)** — внедрена | тёмный «полевой планшет», контраст №1 |
+| **[B · Карта Штаба](https://ericvereshchagin.github.io/SanyTotalWar/design/direction-b.html)** | светлый «генштаб»: бумага, чернила, штампы — уникальность №1 |
+| **[C · Geo Casual](https://ericvereshchagin.github.io/SanyTotalWar/design/direction-c.html)** | светлый дружелюбный тон ближе к Pokémon GO |
+| [Сравнение всех трёх](https://ericvereshchagin.github.io/SanyTotalWar/design/) | три «телефона» на одной странице |
+
 Этот репозиторий — **web-прототип для проверки механики на практике**: реальная география (Leaflet + OpenStreetMap/Esri), но «ходьба» имитируется движением мыши с зажатой ЛКМ. Реализованы все 15 юзер-кейсов игровой модели (UC-01…UC-15, включая постройки и многосторонние войны).
 
 ## Как запустить

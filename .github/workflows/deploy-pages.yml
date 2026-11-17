@@ -30,6 +30,9 @@ jobs:
       - name: Patch base href for project page
         run: sed -i 's|<base href="/" />|<base href="/SanyTotalWar/" />|' publish/wwwroot/index.html
 
+      - name: Include design prototypes
+        run: cp -r design publish/wwwroot/design
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
