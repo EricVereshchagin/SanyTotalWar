@@ -35,26 +35,7 @@
 
     @if (Terr.My)
     {
-        @if (Terr.Buildings.Count > 0)
-        {
-            <div class="dossier-sub">ПОСТРОЙКИ НА ЗЕМЛЕ</div>
-            <div class="built-list">
-                @foreach (var b in Terr.Buildings)
-                {
-                    var (svg, color) = BuildingArt.For(b.Type);
-                    var spec = BuildingCatalog.All[b.Type];
-                    <div class="built-row">
-                        <span class="built-ico" style="color:@color">@((MarkupString)svg)</span>
-                        <div class="built-info">
-                            <b>@spec.NameRu</b>
-                            <span>@spec.DescRu</span>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-
-        <div class="dossier-sub">ПОСТРОИТЬ · зна­чок на карту — точка станет местом</div>
+        <div class="dossier-sub">ПОСТРОИТЬ · тащи карточку на карту</div>
         <div class="build-palette">
             @foreach (var spec in BuildingCatalog.All.Values)
             {

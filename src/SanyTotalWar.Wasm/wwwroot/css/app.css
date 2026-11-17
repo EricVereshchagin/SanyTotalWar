@@ -446,8 +446,8 @@ html, body {
 .trow span { color: var(--ink-dim); }
 .trow b { font-family: var(--font-data); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-.army-bar { height: 6px; background: rgba(255, 255, 255, 0.07); border: none; border-radius: 99px; margin: 6px 0 8px; overflow: hidden; }
-.army-bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--phos-deep), var(--phos)); box-shadow: 0 0 10px rgba(198, 242, 78, 0.5); transition: width 0.5s; }
+.army-bar { height: 5px; background: rgba(255, 255, 255, 0.07); border: none; border-radius: 99px; margin: 6px 14px 8px; overflow: hidden; }
+.army-bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #57685f, #9fb2a6); transition: width 0.5s; }
 
 .terr-buildings { padding: 4px 14px; display: flex; flex-wrap: wrap; gap: 6px; }
 
