@@ -125,10 +125,10 @@
             const c = centroidOf(t);
             if (!c) continue;
             const bld = (t.buildings || []).length;
-            const prev = seenTerr.get(t.id);
+            const prev = seenTerr.has(t.id) ? seenTerr.get(t.id) : null;
             nowTerr.set(t.id, { bld, area: t.area || 0 });
 
-            if (!fxPrimed || prev === undefined) continue;
+            if (!fxPrimed) continue;
 
             if (prev === null) {
                 // новая земля: всход кольца + чип «+площадь» внутри территории
