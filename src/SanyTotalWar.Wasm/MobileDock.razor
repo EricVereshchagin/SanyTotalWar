@@ -1,16 +1,15 @@
 @using SanyTotalWar.Wasm.Services
 @inject UiState Ui
 
-<div class="dock">
+<div class="dock @(Ui.DockOpen ? "" : "collapsed")">
     <MapFab />
 
-    <button class="dock-grab" @onclick="() => Ui.DockOpen = !Ui.DockOpen" aria-label="Развернуть или свернуть панель"></button>
-
-    <div class="dock-tabs">
-        <button class="dock-tab @(Ui.DockTab == "wars" ? "on" : "")" @onclick='() => SetTab("wars")'>
+    <div class="dock-tabs" title="Нажми — свернуть/развернуть" @onclick="() => Ui.DockOpen = !Ui.DockOpen">
+        <span class="dock-grab" aria-hidden="true"></span>
+        <button class="dock-tab @(Ui.DockTab == "wars" ? "on" : "")" @onclick='() => SetTab("wars")' @onclick:stopPropagation="true">
             ВОЙНЫ<span class="n">@ActiveWars</span>
         </button>
-        <button class="dock-tab dock-item-dossier @(Ui.DockTab == "dossier" ? "on" : "")" @onclick='() => SetTab("dossier")'>
+        <button class="dock-tab dock-item-dossier @(Ui.DockTab == "dossier" ? "on" : "")" @onclick='() => SetTab("dossier")' @onclick:stopPropagation="true">
             ДОСЬЕ
         </button>
     </div>
