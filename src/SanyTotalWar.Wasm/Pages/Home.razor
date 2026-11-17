@@ -184,12 +184,17 @@
                 .Where(p => p.Exterior.Count >= 3)
                 .Select(p => RingsOf(new List<List<GeoPoint>> { p.Exterior }.Concat(p.Holes)))
                 .ToList(),
-            buildings = t.Buildings.Select(b => b.Type switch
+            buildings = t.Buildings.Select(b => new
             {
-                BuildingType.ConscriptionOffice => "c",
-                BuildingType.Fortress => "f",
-                BuildingType.Airport => "a",
-                _ => "b"
+                t = b.Type switch
+                {
+                    BuildingType.ConscriptionOffice => "c",
+                    BuildingType.Fortress => "f",
+                    BuildingType.Airport => "a",
+                    _ => "b"
+                },
+                lat = b.Position?.Lat,
+                lng = b.Position?.Lng,
             }).ToList(),
         }).ToList();
 
@@ -234,6 +239,26 @@
         _vm = BuildSnapshot();
         await PushMap();
         await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task OnBuildingDropped(double lat, double lng)
+    {
+        if (Ui.PendingPlacement is not { } pending) return;
+        Ui.PendingPlacement = null;
+        try { await Js.InvokeVoidAsync("sanyMap.setPlacement", "", "", false); } catch (JSDisconnectedException) { }
+        var events = Engine.Build(Ui.MeId, pending.TerrId, pending.Type, new GeoPoint(lat, lng));
+        Ui.PushToasts(events);
+        _vm = BuildSnapshot();
+        await PushMap();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void OnPlacementCancelled()
+    {
+        Ui.PendingPlacement = null;
+        _ = InvokeAsync(StateHasChanged);
     }
 
     [JSInvokable]

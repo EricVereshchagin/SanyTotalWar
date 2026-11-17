@@ -1,9 +1,14 @@
 namespace SanyTotalWar.Domain.Entities;
 
+using SanyTotalWar.Domain.Common;
+
 public sealed class Building
 {
     public BuildingType Type { get; init; }
     public DateTime BuiltAtGameTime { get; init; }
+
+    /// <summary>Точка установки постройки; null = центр территории (наследие).</summary>
+    public GeoPoint? Position { get; init; }
 }
 
 public enum BuildingType

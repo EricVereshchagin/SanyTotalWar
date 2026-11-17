@@ -464,9 +464,7 @@ html, body {
     border-radius: 8px;
 }
 
-.build-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 14px; }
-
-.build-btn {
+.build-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 14px; }.build-btn {
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.03);
     color: var(--ink);
@@ -487,6 +485,99 @@ html, body {
 .bb-cost { font-family: var(--font-data); font-size: 11px; color: var(--ink); }
 .bb-desc { font-size: 9.5px; color: var(--ink-faint); line-height: 1.35; }
 .bb-limit { font-family: var(--font-data); font-size: 9px; color: var(--ink-faint); }
+
+/* ---------- красивое досье территории ---------- */
+
+.dossier { padding: 0 0 10px; }
+
+.dossier-head { padding: 12px 14px 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dossier-name { font-family: var(--font-display); font-weight: 500; font-size: 13px; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 0 14px; }
+.stat-cell { background: rgba(255, 255, 255, 0.035); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; text-align: center; }
+.stat-cell-v { font-family: var(--font-data); font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat-cell-v small { font-size: 9px; color: var(--ink-faint); font-weight: 400; }
+.stat-cell-k { font-size: 7.5px; letter-spacing: 0.22em; color: var(--ink-dim); margin-top: 4px; font-family: var(--font-data); }
+.stat-cell.war .stat-cell-v { color: var(--war-hi); }
+
+.dossier-sub {
+    font-family: var(--font-data);
+    font-size: 8.5px;
+    letter-spacing: 0.24em;
+    color: var(--ink-dim);
+    padding: 12px 14px 6px;
+}
+
+.built-list { padding: 0 14px; display: flex; flex-direction: column; gap: 6px; }
+.built-row { display: flex; gap: 10px; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; }
+.built-ico { flex: none; display: inline-flex; }
+.built-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.built-info b { font-size: 11.5px; color: var(--ink); }
+.built-info span { font-size: 9px; color: var(--ink-faint); line-height: 1.3; }
+
+.build-palette { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 14px; }
+
+.build-card {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--ink);
+    text-align: left;
+    padding: 10px 11px;
+    border-radius: 12px;
+    cursor: grab;
+    transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 88px;
+    position: relative;
+    font-family: var(--font-body);
+}
+.build-card:hover:not(:disabled) { border-color: var(--line-lit); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); }
+.build-card:disabled { opacity: 0.35; cursor: not-allowed; }
+.build-card.arming { border-color: var(--phos); box-shadow: 0 0 0 1px var(--phos), 0 0 18px rgba(198, 242, 78, 0.25); cursor: crosshair; }
+.build-ico { display: inline-flex; width: 26px; height: 26px; }
+.bld-svg { width: 100%; height: 100%; }
+.build-name { font-weight: 700; font-size: 12px; color: var(--ink); letter-spacing: 0.02em; }
+.build-cost { font-family: var(--font-data); font-size: 10.5px; color: var(--warm); }
+.build-desc { font-size: 9px; color: var(--ink-faint); line-height: 1.35; }
+.build-limit { font-family: var(--font-data); font-size: 8.5px; color: var(--ink-faint); position: absolute; top: 8px; right: 10px; }
+
+.dossier-note { padding: 10px 14px 4px; font-size: 10.5px; color: var(--ink-dim); line-height: 1.6; }
+
+/* ---------- режим установки постройки ---------- */
+
+.placement-ghost {
+    position: absolute;
+    z-index: 900;
+    width: 34px;
+    height: 34px;
+    transform: translate(-50%, -60%);
+    pointer-events: none;
+    animation: ghostBreath 1.4s ease-in-out infinite;
+}
+.placement-ghost .bld-mark { background: rgba(12, 17, 14, 0.9); box-shadow: 0 0 16px rgba(198, 242, 78, 0.55); }
+.placement-ghost.bad { animation: ghostBad 0.45s ease; }
+.placement-ghost.bad .bld-mark { color: var(--war-hi) !important; box-shadow: 0 0 16px rgba(255, 90, 78, 0.7); }
+@keyframes ghostBreath { 0%, 100% { transform: translate(-50%, -60%) scale(1); } 50% { transform: translate(-50%, -60%) scale(1.15); } }
+@keyframes ghostBad { 0%, 100% { margin-left: 0; } 25% { margin-left: -5px; } 75% { margin-left: 5px; } }
+.placing .leaflet-container { cursor: crosshair; }
+
+/* ---------- иконки построек на карте ---------- */
+
+.bld-mark-wrap { background: transparent; border: none; }
+.bld-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px 8px 11px 11px;
+    background: rgba(10, 14, 12, 0.88);
+    border: 1.5px solid currentColor;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55), 0 0 10px rgba(0, 0, 0, 0.35);
+}
+.bld-mark svg { width: 17px; height: 17px; }
 
 /* ---------- FAB (мобильный) ---------- */
 

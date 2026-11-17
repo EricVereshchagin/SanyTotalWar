@@ -472,7 +472,7 @@ public sealed class GameEngine
         }
     }
 
-    public List<EngineEvent> Build(Guid playerId, Guid territoryId, BuildingType type)
+    public List<EngineEvent> Build(Guid playerId, Guid territoryId, BuildingType type, GeoPoint? position = null)
     {
         var events = new List<EngineEvent>();
         var world = W;
@@ -491,8 +491,19 @@ public sealed class GameEngine
             events.Add(new EngineEvent("warn", $"Недостаточно армии для «{spec.NameRu}»: нужно {spec.Cost}, есть {t.Army}"));
             return events;
         }
+        var place = position;
+        if (place is not null && !_geo.CoversPoint(PartsAsShapes(t), place.Value))
+        {
+            events.Add(new EngineEvent("warn", $"«{spec.NameRu}» можно ставить только внутри своей земли"));
+            return events;
+        }
+        if (place is null)
+        {
+            var c = _geo.Centroid(PartsAsShapes(t));
+            place = c;
+        }
         t.Army -= spec.Cost;
-        t.Buildings.Add(new Building { Type = type, BuiltAtGameTime = world.GameNow });
+        t.Buildings.Add(new Building { Type = type, BuiltAtGameTime = world.GameNow, Position = place });
         world.Log("build", $"UC-13 · «{t.Name}»: построен {spec.NameRu} (−{spec.Cost} солдат). {spec.DescRu}");
         events.Add(new EngineEvent("build", $"{spec.NameRu} построен на «{t.Name}»"));
         world.Bump();

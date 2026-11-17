@@ -1,6 +1,7 @@
 ﻿namespace SanyTotalWar.Wasm.Services;
 
 using SanyTotalWar.Application;
+using SanyTotalWar.Domain.Entities;
 
 public sealed class UiState
 {
@@ -19,6 +20,9 @@ public sealed class UiState
     public bool MarchMode { get; set; }
     public bool DockOpen { get; set; } = true;
     public string DockTab { get; set; } = "wars";
+
+    /// <summary>Строение «в руках»: drag&drop или режим установки на карту.</summary>
+    public (Guid TerrId, BuildingType Type)? PendingPlacement { get; set; }
 
     /// <summary>Момент последнего отказа (kind=warn): FAB встряхивается вместо текста.</summary>
     public DateTime LastWarnUtc { get; private set; } = DateTime.MinValue;

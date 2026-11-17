@@ -27,6 +27,14 @@
     const PHOS = '#c6f24e', WAR = '#ff5a4e';
     const BLD_GLYPHS = { 'c': ['В', '#c6f24e'], 'f': ['К', '#ff5a4e'], 'a': ['А', '#5bd4e6'], 'b': ['Б', '#5fc98d'] };
 
+    // векторная графика построек (как в досье, один стиль)
+    const BUILD_SVG = {
+        c: "<svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M6 21V4h1.6v3H15a.8.8 0 0 1 .62 1.3L13.2 11l2.42 2.7A.8.8 0 0 1 15 15H7.6v6H6Z' fill='currentColor'/><path d='M3.5 21h17v1.6h-17z' fill='currentColor' opacity='.55'/></svg>",
+        f: "<svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M4 21V10h2V7h1.8v3h3.4V7H13v3h3.4V7H18v3h2v11h-5.5v-4a2.5 2.5 0 0 0-5 0v4H4Z' fill='currentColor'/><path d='M2.5 21h19v1.6h-19z' fill='currentColor' opacity='.55'/></svg>",
+        a: "<svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M21 15.5 13.8 11V4.6a1.8 1.8 0 0 0-3.6 0V11L3 15.5v1.9l7.2-2.1v4.6l-2.4 1.6v1.3L12 21.9l4.2.9v-1.3l-2.4-1.6v-4.6l7.2 2.1v-1.9Z' fill='currentColor'/></svg>",
+        b: "<svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M12 2.5 20 6v5.5c0 5.2-3.4 8.7-8 10-4.6-1.3-8-4.8-8-10V6l8-3.5Z' fill='currentColor'/></svg>"
+    };
+
     function dockOffset() {
         const d = document.querySelector('.dock');
         return d ? d.offsetHeight : 0;
@@ -125,6 +133,46 @@
 
     // краткое досье территории — отдельный тултип, открывается кликом
     let terrTip = null;
+
+    // ---- режим установки постройки (клик из досье или drop с карточки) ----
+
+    let placement = null; // { terrId, type }
+    let ghostEl = null;
+
+    function stopPlacement() {
+        placement = null;
+        if (ghostEl) { ghostEl.remove(); ghostEl = null; }
+        map.getContainer().classList.remove('placing');
+    }
+
+    function setPlacement(terrId, type) {
+        placement = { terrId: terrId, type: type };
+        const el = map.getContainer();
+        if (!ghostEl) {
+            ghostEl = document.createElement('div');
+            ghostEl.className = 'placement-ghost';
+            el.appendChild(ghostEl);
+        }
+        ghostEl.innerHTML = `<span class="bld-mark" style="color:${(BLD_GLYPHS[type] || ['?', '#999'])[1]}">${BUILD_SVG[type] || BUILD_SVG.b}</span>`;
+        el.classList.add('placing');
+    }
+
+    function tryPlaceAt(latlng) {
+        if (!placement || !dotnet) return;
+        const entry = terrIndex.get(placement.terrId);
+        const inside = entry && entry.polys.some(p => p.contains(latlng));
+        if (!inside) {
+            if (ghostEl) {
+                ghostEl.classList.remove('bad');
+                void ghostEl.offsetWidth;
+                ghostEl.classList.add('bad');
+            }
+            return;
+        }
+        const t = placement.terrId, ty = placement.type;
+        stopPlacement();
+        dotnet.invokeMethodAsync('OnBuildingDropped', latlng.lat, latlng.lng);
+    }
 
     function closeTerrTip() {
         if (terrTip) {
@@ -240,7 +288,7 @@
             keep.add(t.id);
             let entry = terrIndex.get(t.id);
             if (!entry) {
-                entry = { polys: [], sig: '', bldMarker: null, bldKey: null, data: null };
+                entry = { polys: [], sig: '', bldMarkers: null, bldKey: null, data: null };
                 terrIndex.set(t.id, entry);
             }
             entry.data = t;
@@ -260,13 +308,17 @@
                         className: 'terr',
                         bubblingMouseEvents: false
                     });
-                    // досье открывается кликом, а не наведением
-                    poly.on('click', e => {
-                        const d = entry.data;
-                        if (d && d.selected) { closeTerrTip(); }
-                        else { showTerrTip(d, e.latlng); }
-                        dotnet.invokeMethodAsync('OnTerritoryClicked', d.id);
-                    });
+                // досье открывается кликом; в режиме установки клик = «поставить здесь»
+                poly.on('click', e => {
+                    if (placement) {
+                        tryPlaceAt(e.latlng);
+                        return;
+                    }
+                    const d = entry.data;
+                    if (d && d.selected) { closeTerrTip(); }
+                    else { showTerrTip(d, e.latlng); }
+                    dotnet.invokeMethodAsync('OnTerritoryClicked', d.id);
+                });
                     gTerritory.addLayer(poly);
                     entry.polys.push(poly);
                 }
@@ -284,42 +336,40 @@
                 if (p._path) p._path.classList.toggle('sel', !!t.selected);
             }
 
-            // постройки: маркер трогаем только при смене набора/центра
+            // постройки: маркеры по точкам установки, обновление при смене набора
             const c = centroidOf(t);
-            const bldKey = c ? (t.buildings || []).join('') : '';
-            if (entry.bldMarker && (entry.bldKey !== bldKey || !c)) {
-                gTerritory.removeLayer(entry.bldMarker);
-                entry.bldMarker = null;
-                entry.bldKey = null;
+            const bldList = t.buildings || [];
+            const bldKey = c ? bldList.map(b => `${b.t}@${b.lat ?? ''},${b.lng ?? ''}`).join('|') : '';
+
+            if (entry.bldMarkers && entry.bldKey !== bldKey) {
+                for (const m of entry.bldMarkers) gTerritory.removeLayer(m);
+                entry.bldMarkers = null;
             }
-            if (c && bldKey) {
-                if (entry.bldMarker) {
-                    entry.bldMarker.setLatLng(c);
-                } else {
-                    const icons = (t.buildings || []).map(ch => {
-                        const g = BLD_GLYPHS[ch] || ['?', '#999'];
-                        return `<span class="bld" style="border-color:${g[1]};color:${g[1]}" title="">${g[0]}</span>`;
-                    }).join('');
-                    entry.bldMarker = L.marker(c, {
+            if (c && bldKey && !entry.bldMarkers) {
+                entry.bldMarkers = bldList.map(b => {
+                    const g = BLD_GLYPHS[b.t] || ['?', '#999'];
+                    const pos = (b.lat != null && b.lng != null) ? [b.lat, b.lng] : c;
+                    const m = L.marker(pos, {
+                        interactive: false,
                         icon: L.divIcon({
-                            className: 'bld-wrap',
-                            html: `<div class="bld-icons">${icons}</div>`,
-                            iconSize: [64, 18],
-                            iconAnchor: [32, 9]
-                        }),
-                        interactive: false
+                            className: 'bld-mark-wrap',
+                            html: `<span class="bld-mark" style="color:${g[1]}">${BUILD_SVG[b.t] || BUILD_SVG.b}</span>`,
+                            iconSize: [26, 26],
+                            iconAnchor: [13, 24]
+                        })
                     });
-                    gTerritory.addLayer(entry.bldMarker);
-                    entry.bldKey = bldKey;
-                }
+                    gTerritory.addLayer(m);
+                    return m;
+                });
+                entry.bldKey = bldKey;
             }
         }
 
-        // исчезнувшие земли (слияние/распад): убрать políгоны с карты
+        // исчезнувшие земли (слияние/распад): убрать с карты
         for (const [id, entry] of Array.from(terrIndex)) {
             if (!keep.has(id)) {
                 for (const p of entry.polys) gTerritory.removeLayer(p);
-                if (entry.bldMarker) gTerritory.removeLayer(entry.bldMarker);
+                for (const m of (entry.bldMarkers || [])) gTerritory.removeLayer(m);
                 terrIndex.delete(id);
             }
         }
@@ -457,8 +507,40 @@
             el.style.touchAction = 'none';
             el.addEventListener('contextmenu', e => e.preventDefault());
 
-            // клик по пустому месту карты закрывает досье-тултип
-            map.on('click', closeTerrTip);
+            // клик по пустому месту карты закрывает досье-тултип / ставит вне зоны
+            map.on('click', e => {
+                closeTerrTip();
+                if (placement) tryPlaceAt(e.latlng);
+            });
+
+            // режим установки постройки: призрак следует за курсором, Esc/ПКМ — отмена
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && placement) {
+                    stopPlacement();
+                    dotnet.invokeMethodAsync('OnPlacementCancelled');
+                }
+            });
+            el.addEventListener('contextmenu', e => {
+                if (placement && !e.defaultPrevented) {
+                    e.preventDefault();
+                    stopPlacement();
+                    dotnet.invokeMethodAsync('OnPlacementCancelled');
+                }
+            });
+            el.addEventListener('mousemove', e => {
+                if (!ghostEl) return;
+                const rect = el.getBoundingClientRect();
+                ghostEl.style.left = (e.clientX - rect.left) + 'px';
+                ghostEl.style.top = (e.clientY - rect.top) + 'px';
+            });
+
+            // drag&drop карточек построек из досье прямо на карту
+            el.addEventListener('dragover', e => e.preventDefault());
+            el.addEventListener('drop', e => {
+                e.preventDefault();
+                const ll = map.mouseEventToLatLng(e);
+                dotnet.invokeMethodAsync('OnBuildingDropped', ll.lat, ll.lng);
+            });
 
             // ховер при зуме не работает; рендер откладывается до конца зума
             map.on('zoomstart', () => {
@@ -551,6 +633,12 @@
                     map.doubleClickZoom.enable();
                 }
             }
+        },
+
+        // включение/выключение режима размещения из UI (Blazor)
+        setPlacement: function (terrId, type, on) {
+            if (on) setPlacement(terrId, type);
+            else stopPlacement();
         },
 
         pushState: function (json) {
