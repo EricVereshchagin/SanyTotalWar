@@ -1,9 +1,9 @@
-/* ============================================================
-   SANY TOTAL WAR · NIGHT OPS 2.6
-   Дизайн-дирекция 2026: графит + фосфор, полевой планшет.
-   Шрифты: Unbounded (заголовки) · JetBrains Mono (телеметрия).
-   Десктоп: боковые рельсы. Мобильный: статус-бар, метрики,
-   нижний док с вкладками, FAB-марш.
+﻿/* ============================================================
+   SANY TOTAL WAR В· NIGHT OPS 2.6
+   Р”РёР·Р°Р№РЅ-РґРёСЂРµРєС†РёСЏ 2026: РіСЂР°С„РёС‚ + С„РѕСЃС„РѕСЂ, РїРѕР»РµРІРѕР№ РїР»Р°РЅС€РµС‚.
+   РЁСЂРёС„С‚С‹: Unbounded (Р·Р°РіРѕР»РѕРІРєРё) В· JetBrains Mono (С‚РµР»РµРјРµС‚СЂРёСЏ).
+   Р”РµСЃРєС‚РѕРї: Р±РѕРєРѕРІС‹Рµ СЂРµР»СЊСЃС‹. РњРѕР±РёР»СЊРЅС‹Р№: СЃС‚Р°С‚СѓСЃ-Р±Р°СЂ, РјРµС‚СЂРёРєРё,
+   РЅРёР¶РЅРёР№ РґРѕРє СЃ РІРєР»Р°РґРєР°РјРё, FAB-РјР°СЂС€.
    ============================================================ */
 
 :root {
@@ -37,7 +37,7 @@
     --tap: 44px;
 }
 
-/* ---------- базовое ---------- */
+/* ---------- Р±Р°Р·РѕРІРѕРµ ---------- */
 
 html, body {
     height: 100%;
@@ -54,12 +54,12 @@ html, body {
 
 #map { position: absolute; inset: 0; background: var(--bg-2); }
 
-/* фон под тайлами: зазоры непрогруженных тайлов выглядят как тёмная зелень
-   «неразведанной местности», а не чёрные дыры */
+/* С„РѕРЅ РїРѕРґ С‚Р°Р№Р»Р°РјРё: Р·Р°Р·РѕСЂС‹ РЅРµРїСЂРѕРіСЂСѓР¶РµРЅРЅС‹С… С‚Р°Р№Р»РѕРІ РІС‹РіР»СЏРґСЏС‚ РєР°Рє С‚С‘РјРЅР°СЏ Р·РµР»РµРЅСЊ
+   В«РЅРµСЂР°Р·РІРµРґР°РЅРЅРѕР№ РјРµСЃС‚РЅРѕСЃС‚РёВ», Р° РЅРµ С‡С‘СЂРЅС‹Рµ РґС‹СЂС‹ */
 .leaflet-tile-pane { background: #122017; }
 .leaflet-tile { image-rendering: auto; }
 
-/* карта: ночная съёмка */
+/* РєР°СЂС‚Р°: РЅРѕС‡РЅР°СЏ СЃСЉС‘РјРєР° */
 .war-tiles { filter: grayscale(0.42) brightness(0.66) contrast(1.22) sepia(0.26) hue-rotate(52deg) saturate(1.2); }
 
 .leaflet-container .leaflet-control-attribution {
@@ -100,7 +100,7 @@ html, body {
     z-index: 500;
 }
 
-/* ---------- загрузка Blazor ---------- */
+/* ---------- Р·Р°РіСЂСѓР·РєР° Blazor ---------- */
 
 #app { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
 
@@ -115,14 +115,14 @@ html, body {
     stroke-linecap: round;
 }
 .loading-progress-text:after {
-    content: var(--blazor-load-percentage-text, "РАЗВЁРТЫВАЕМ ШТАБ…");
+    content: var(--blazor-load-percentage-text, "Р РђР—Р’РЃР РўР«Р’РђР•Рњ РЁРўРђР‘вЂ¦");
     font-family: var(--font-data);
     font-size: 11px;
     letter-spacing: 0.3em;
     color: var(--ink-dim);
 }
 
-/* ---------- верхний блок ---------- */
+/* ---------- РІРµСЂС…РЅРёР№ Р±Р»РѕРє ---------- */
 
 .hud-top {
     position: absolute;
@@ -250,7 +250,7 @@ html, body {
 }
 .brief-btn:hover { background: var(--phos); color: var(--phos-ink); box-shadow: 0 0 18px rgba(198, 242, 78, 0.4); }
 
-/* метрики — только мобильный */
+/* РјРµС‚СЂРёРєРё вЂ” С‚РѕР»СЊРєРѕ РјРѕР±РёР»СЊРЅС‹Р№ */
 .metric-strip {
     display: none;
     gap: 8px;
@@ -271,7 +271,7 @@ html, body {
 .metric.war .metric-k { color: var(--war-hi); }
 .metric.land .metric-v { color: var(--phos); }
 
-/* ---------- панели ---------- */
+/* ---------- РїР°РЅРµР»Рё ---------- */
 
 .panel {
     position: absolute;
@@ -323,16 +323,14 @@ html, body {
     padding: 10px 14px 4px;
 }
 
-/* ---------- правая рельса (десктоп) ---------- */
-
-.side { right: 10px; top: 130px; width: 348px; max-height: calc(100% - 152px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent; padding-bottom: 12px; }
+/* ---------- РїСЂР°РІР°СЏ СЂРµР»СЊСЃР° (РґРµСЃРєС‚РѕРї) ---------- */
 
 .side-empty { padding: 16px 14px; font-size: 12.5px; line-height: 1.8; color: var(--ink-dim); }
 .side-empty b { color: var(--phos); }
 
 .side-note { padding: 10px 14px 4px; font-size: 11px; color: var(--ink-dim); line-height: 1.55; }
 
-/* карточка войны */
+/* РєР°СЂС‚РѕС‡РєР° РІРѕР№РЅС‹ */
 
 @keyframes jIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
@@ -385,7 +383,7 @@ html, body {
 
 .war-hint { font-size: 10px; color: var(--ink-faint); margin-top: 8px; line-height: 1.5; }
 
-/* кнопки */
+/* РєРЅРѕРїРєРё */
 
 .btn {
     border: 1px solid var(--line);
@@ -413,7 +411,7 @@ html, body {
 .btn.primary:hover { background: var(--phos); color: var(--phos-ink); box-shadow: 0 0 18px rgba(198, 242, 78, 0.4); }
 .btn.big { width: 100%; padding: 15px 0; margin-top: 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.24em; border-radius: 12px; }
 
-/* карточка территории */
+/* РєР°СЂС‚РѕС‡РєР° С‚РµСЂСЂРёС‚РѕСЂРёРё */
 
 .terr-card { padding: 0 0 8px; }
 
@@ -486,7 +484,7 @@ html, body {
 .bb-desc { font-size: 9.5px; color: var(--ink-faint); line-height: 1.35; }
 .bb-limit { font-family: var(--font-data); font-size: 9px; color: var(--ink-faint); }
 
-/* ---------- красивое досье территории (плавающая карточка) ---------- */
+/* ---------- РєСЂР°СЃРёРІРѕРµ РґРѕСЃСЊРµ С‚РµСЂСЂРёС‚РѕСЂРёРё (РїР»Р°РІР°СЋС‰Р°СЏ РєР°СЂС‚РѕС‡РєР°) ---------- */
 
 .dossier-float {
     position: absolute;
@@ -588,7 +586,7 @@ html, body {
 
 .dossier-note { padding: 10px 14px 4px; font-size: 10.5px; color: var(--ink-dim); line-height: 1.6; }
 
-/* ---------- режим установки постройки ---------- */
+/* ---------- СЂРµР¶РёРј СѓСЃС‚Р°РЅРѕРІРєРё РїРѕСЃС‚СЂРѕР№РєРё ---------- */
 
 .placement-ghost {
     position: absolute;
@@ -606,7 +604,7 @@ html, body {
 @keyframes ghostBad { 0%, 100% { margin-left: 0; } 25% { margin-left: -5px; } 75% { margin-left: 5px; } }
 .placing .leaflet-container { cursor: crosshair; }
 
-/* ---------- иконки построек на карте ---------- */
+/* ---------- РёРєРѕРЅРєРё РїРѕСЃС‚СЂРѕРµРє РЅР° РєР°СЂС‚Рµ ---------- */
 
 .bld-mark-wrap { background: transparent; border: none; }
 .bld-mark {
@@ -622,7 +620,7 @@ html, body {
 }
 .bld-mark svg { width: 17px; height: 17px; }
 
-/* ---------- FAB (мобильный) ---------- */
+/* ---------- FAB (РјРѕР±РёР»СЊРЅС‹Р№) ---------- */
 
 .fab-col { display: none; position: absolute; right: 14px; flex-direction: column; gap: 10px; z-index: 650; }
 
@@ -667,27 +665,25 @@ html, body {
     box-shadow: 0 0 26px rgba(198, 242, 78, 0.45);
 }
 
-/* ---------- мобильный док ---------- */
+/* ---------- РґРѕРє: РІРѕР№РЅС‹ + РґРѕСЃСЊРµ (РІРµР·РґРµ; РЅР° РјРѕР±РёР»СЊРЅРѕРј вЂ” РїРѕР»РЅС‹Р№ РЅРёР·) ---------- */
 
 .dock {
-    display: none;
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 14px;
+    bottom: 14px;
+    width: 372px;
     z-index: 640;
     background: var(--surface-2);
     border: 1px solid var(--line);
-    border-bottom: none;
-    border-radius: 22px 22px 0 0;
-    box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.5);
+    border-radius: var(--r-panel);
+    box-shadow: var(--shadow-panel);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow: hidden;
 }
 
-/* FAB-кнопки живут внутри дока — растут над ним автоматически */
-.dock > .fab-col { display: flex; bottom: 100%; margin-bottom: 16px; }
+/* FAB-РєРЅРѕРїРєРё Р¶РёРІСѓС‚ РІРЅСѓС‚СЂРё РґРѕРєР° вЂ” СЂР°СЃС‚СѓС‚ РЅР°Рґ РЅРёРј Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё */
+.dock > .fab-col { display: flex; bottom: 100%; margin-bottom: 14px; }
 
 .dock-grab {
     display: block;
@@ -728,7 +724,7 @@ html, body {
 .dock-empty { padding: 10px 6px; font-size: 12px; line-height: 1.8; color: var(--ink-dim); }
 .dock-empty b { color: var(--phos); }
 
-/* ---------- HUD марша ---------- */
+/* ---------- HUD РјР°СЂС€Р° ---------- */
 
 .walk-hud {
     position: absolute;
@@ -755,7 +751,7 @@ html, body {
     text-overflow: ellipsis;
 }
 
-/* ---------- FX на карте: вместо текстовых уведомлений ---------- */
+/* ---------- FX РЅР° РєР°СЂС‚Рµ: РІРјРµСЃС‚Рѕ С‚РµРєСЃС‚РѕРІС‹С… СѓРІРµРґРѕРјР»РµРЅРёР№ ---------- */
 
 .fx-wrap { background: transparent; border: none; overflow: visible; pointer-events: none; }
 
@@ -769,7 +765,7 @@ html, body {
     opacity: 0;
 }
 
-/* захват земли: двойное кольцо + вспышка заливки */
+/* Р·Р°С…РІР°С‚ Р·РµРјР»Рё: РґРІРѕР№РЅРѕРµ РєРѕР»СЊС†Рѕ + РІСЃРїС‹С€РєР° Р·Р°Р»РёРІРєРё */
 .fx-capture i {
     border: 3px solid var(--phos);
     box-shadow: 0 0 18px rgba(198, 242, 78, 0.5), inset 0 0 8px rgba(198, 242, 78, 0.3);
@@ -783,7 +779,7 @@ html, body {
     animation: fxFlash 1.4s ease-out forwards;
 }
 
-/* начало войны: тройные алые ударные кольца */
+/* РЅР°С‡Р°Р»Рѕ РІРѕР№РЅС‹: С‚СЂРѕР№РЅС‹Рµ Р°Р»С‹Рµ СѓРґР°СЂРЅС‹Рµ РєРѕР»СЊС†Р° */
 .fx-war i {
     border: 3px solid var(--war);
     box-shadow: 0 0 20px rgba(255, 90, 78, 0.55);
@@ -798,13 +794,13 @@ html, body {
     animation: fxFlash 2s ease-out forwards;
 }
 
-/* завершение войны: мягкая дуга мира */
+/* Р·Р°РІРµСЂС€РµРЅРёРµ РІРѕР№РЅС‹: РјСЏРіРєР°СЏ РґСѓРіР° РјРёСЂР° */
 .fx-peace i {
     border: 2px dashed var(--ok);
     animation: fxRing 1.8s cubic-bezier(0.25, 0.75, 0.35, 1) forwards;
 }
 
-/* новая постройка: маячок-поп */
+/* РЅРѕРІР°СЏ РїРѕСЃС‚СЂРѕР№РєР°: РјР°СЏС‡РѕРє-РїРѕРї */
 .fx-bld i {
     width: 12px; height: 12px;
     border-radius: 4px;
@@ -831,7 +827,7 @@ html, body {
     100% { opacity: 0; transform: translate(-50%, -50%) rotate(45deg) scale(1.6); }
 }
 
-/* чип-значение: иконка + число внутри территории */
+/* С‡РёРї-Р·РЅР°С‡РµРЅРёРµ: РёРєРѕРЅРєР° + С‡РёСЃР»Рѕ РІРЅСѓС‚СЂРё С‚РµСЂСЂРёС‚РѕСЂРёРё */
 .fx s {
     position: absolute;
     left: 50%;
@@ -881,7 +877,7 @@ html, body {
     animation-duration: 1.9s;
 }
 
-/* ---------- модальный брифинг ---------- */
+/* ---------- РјРѕРґР°Р»СЊРЅС‹Р№ Р±СЂРёС„РёРЅРі ---------- */
 
 .modal-back {
     position: absolute;
@@ -916,7 +912,7 @@ html, body {
 .brief-list { margin: 4px 12px; padding-left: 16px; font-size: 12.5px; line-height: 1.7; color: var(--ink); }
 .brief-list b { color: var(--phos); }
 
-/* ---------- карта: зоны войны и точки ---------- */
+/* ---------- РєР°СЂС‚Р°: Р·РѕРЅС‹ РІРѕР№РЅС‹ Рё С‚РѕС‡РєРё ---------- */
 
 .war-zone { animation: zoneDash 1.1s linear infinite; }
 @keyframes zoneDash { to { stroke-dashoffset: -34; } }
@@ -942,7 +938,7 @@ html, body {
     50% { box-shadow: 0 0 14px rgba(240, 180, 41, 0.85); }
 }
 
-/* ---------- карта: фокус-рамки нет, территория «приподнимается" ---------- */
+/* ---------- РєР°СЂС‚Р°: С„РѕРєСѓСЃ-СЂР°РјРєРё РЅРµС‚, С‚РµСЂСЂРёС‚РѕСЂРёСЏ В«РїСЂРёРїРѕРґРЅРёРјР°РµС‚СЃСЏ" ---------- */
 
 .leaflet-interactive:focus,
 .leaflet-interactive:active { outline: none; }
@@ -951,7 +947,7 @@ html, body {
     transition: filter 0.18s ease, fill-opacity 0.25s ease, stroke-width 0.25s ease;
     pointer-events: visiblePainted;
 }
-/* ховер: простое затемнение, без свечений */
+/* С…РѕРІРµСЂ: РїСЂРѕСЃС‚РѕРµ Р·Р°С‚РµРјРЅРµРЅРёРµ, Р±РµР· СЃРІРµС‡РµРЅРёР№ */
 .terr:hover { filter: brightness(0.78); }
 .terr.sel {
     fill-opacity: 0.5;
@@ -959,7 +955,7 @@ html, body {
     filter: brightness(0.88);
 }
 
-/* свои земли заливаются фотографией (карта просвечивает) */
+/* СЃРІРѕРё Р·РµРјР»Рё Р·Р°Р»РёРІР°СЋС‚СЃСЏ С„РѕС‚РѕРіСЂР°С„РёРµР№ (РєР°СЂС‚Р° РїСЂРѕСЃРІРµС‡РёРІР°РµС‚) */
 .terr.mine {
     fill: url(#terrPhoto);
     fill-opacity: 0.72;
@@ -967,7 +963,7 @@ html, body {
 .terr.mine:hover { fill-opacity: 0.86; filter: brightness(1.04); }
 .terr.mine.sel { fill-opacity: 0.92; }
 
-/* тултип = краткое досье территории */
+/* С‚СѓР»С‚РёРї = РєСЂР°С‚РєРѕРµ РґРѕСЃСЊРµ С‚РµСЂСЂРёС‚РѕСЂРёРё */
 .war-tip {
     background: rgba(12, 17, 14, 0.93) !important;
     border: 1px solid var(--line);
@@ -996,13 +992,13 @@ html, body {
 }
 .tip-terr-row { font-size: 9.5px; color: var(--ink-dim); line-height: 1.65; }
 
-/* во время зума тултипы полностью выключены */
+/* РІРѕ РІСЂРµРјСЏ Р·СѓРјР° С‚СѓР»С‚РёРїС‹ РїРѕР»РЅРѕСЃС‚СЊСЋ РІС‹РєР»СЋС‡РµРЅС‹ */
 .zooming .war-tip { opacity: 0 !important; visibility: hidden !important; }
 
-/* во время зума тултипы полностью выключены */
+/* РІРѕ РІСЂРµРјСЏ Р·СѓРјР° С‚СѓР»С‚РёРїС‹ РїРѕР»РЅРѕСЃС‚СЊСЋ РІС‹РєР»СЋС‡РµРЅС‹ */
 .zooming .war-tip { opacity: 0 !important; visibility: hidden !important; }
 
-/* ---------- постройки на карте ---------- */
+/* ---------- РїРѕСЃС‚СЂРѕР№РєРё РЅР° РєР°СЂС‚Рµ ---------- */
 
 .bld-wrap { background: transparent; border: none; }
 
@@ -1022,7 +1018,7 @@ html, body {
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
 }
 
-/* ---------- ошибки blazor ---------- */
+/* ---------- РѕС€РёР±РєРё blazor ---------- */
 
 #blazor-error-ui {
     display: none;
@@ -1042,15 +1038,26 @@ html, body {
 #blazor-error-ui .dismiss { cursor: pointer; position: absolute; right: 1.5rem; top: 0.6rem; }
 
 /* ============================================================
-   МОБИЛЬНАЯ ВЁРСТКА (< 1100px): док, метрики, FAB
+   РњРћР‘РР›Р¬РќРђРЇ Р’РЃР РЎРўРљРђ (< 1100px): РґРѕРє, РјРµС‚СЂРёРєРё, FAB
    ============================================================ */
 
 @media (max-width: 1099px) {
     .top-stats { display: none; }
     .metric-strip { display: flex; }
-    .side { display: none; }
+    .dossier-float { display: none; }
     .fab-col { display: flex; }
-    .dock { display: block; }
+
+    /* на мобильном док — полный низ, как bottom sheet */
+    .dock {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        border-radius: 22px 22px 0 0;
+        border-bottom: none;
+        box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.5);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
 
     .hud-top { top: 8px; left: 8px; right: 8px; gap: 7px; }
     .top-bar { padding: 10px 12px; gap: 10px; }
@@ -1061,7 +1068,7 @@ html, body {
     .clock { font-size: 12px; }
     .speed-btn { padding: 6px 9px; font-size: 10px; }
 
-    /* крупные тач-таргеты */
+    /* РєСЂСѓРїРЅС‹Рµ С‚Р°С‡-С‚Р°СЂРіРµС‚С‹ */
     .war-actions { display: grid; grid-template-columns: 1fr 1fr; }
     .war-actions select { grid-column: 1 / -1; }
     .btn { min-height: var(--tap); padding: 12px 14px; font-size: 11px; }
@@ -1077,14 +1084,11 @@ html, body {
     .leaflet-control-layers { display: none; }
 }
 
-/* очень узкие экраны */
+/* РѕС‡РµРЅСЊ СѓР·РєРёРµ СЌРєСЂР°РЅС‹ */
 @media (max-width: 380px) {
     .metric-v { font-size: 14px; }
     .clock-box { gap: 6px; }
 }
 
-/* планшет: рельсы уже, дока нет */
-@media (min-width: 1100px) and (max-width: 1360px) {
-    .journal { width: 280px; }
-    .side { width: 320px; }
-}
+/* РїР»Р°РЅС€РµС‚: СЂРµР»СЊСЃС‹ СѓР¶Рµ, РґРѕРєР° РЅРµС‚ */
+
