@@ -6,7 +6,6 @@
     let touchDrawing = false;
     let marchMode = false;
     let isTouch = false;
-    let hoveredPoly = null;
     let panDrag = false;
     let prevPan = null;
     let lastVersion = -1;
@@ -207,10 +206,6 @@
                     fillOpacity: 0.30,
                 });
                 poly.on('click', () => dotnet.invokeMethodAsync('OnTerritoryClicked', t.id));
-                // подсказка живёт всё время наведения: запоминаем слой и
-                // возвращаем её после каждого зума на прежнюю точку
-                poly.on('mouseover', () => { hoveredPoly = poly; });
-                poly.on('mouseout', () => { if (hoveredPoly === poly) hoveredPoly = null; });
                 poly.bindTooltip(t.name, {
                     direction: 'top',
                     className: 'war-tip',
@@ -336,14 +331,9 @@
             el.style.touchAction = 'none';
             el.addEventListener('contextmenu', e => e.preventDefault());
 
-            // подсказка не дёргается при зуме: прячем на zoomstart,
-            // на zoomend возвращаем, если курсор всё ещё на территории
-            map.on('zoomstart', () => {
-                gTerritory.eachLayer(l => l.closeTooltip());
-            });
-            map.on('zoomend', () => {
-                if (hoveredPoly) hoveredPoly.openTooltip();
-            });
+            // ховер при зуме не работает: на время зума тултипы выключаются
+            map.on('zoomstart', () => el.classList.add('zooming'));
+            map.on('zoomend', () => el.classList.remove('zooming'));
 
             // --- мышь: ЛКМ = маршрут, ПКМ = панорама ---
             el.addEventListener('mousedown', e => {

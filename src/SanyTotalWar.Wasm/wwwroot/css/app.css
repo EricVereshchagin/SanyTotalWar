@@ -816,6 +816,9 @@ html, body {
 }
 .war-tip::before { display: none !important; }
 
+/* во время зума тултипы полностью выключены */
+.zooming .war-tip { opacity: 0 !important; visibility: hidden !important; }
+
 /* ---------- постройки на карте ---------- */
 
 .bld-wrap { background: transparent; border: none; }
