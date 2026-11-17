@@ -55,7 +55,7 @@
             color: PHOS, weight: 3.5, dashArray: '7 7', opacity: 0.95,
             lineCap: 'round'
         }).addTo(gWalk);
-        hud('МАРШ · 0 м · замкните петлю');
+        hud('МАРШ · 0 м · пересеки свой след — петля');
     }
 
     function pushTrackPoint(latlng) {
@@ -66,7 +66,7 @@
             trackLine.addLatLng(latlng);
             let meters = 0;
             for (let i = 1; i < latlngs.length; i++) meters += map.distance(latlngs[i - 1], latlngs[i]);
-            hud(`МАРШ · ${Math.round(meters)} м · ~${Math.floor(meters / 25)} солдат · замкните петлю`);
+            hud(`МАРШ · ${Math.round(meters)} м · ~${Math.floor(meters / 25)} солдат · пересеки свой след или вернись дугой к своей земле`);
         }
     }
 

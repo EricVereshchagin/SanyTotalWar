@@ -7,6 +7,10 @@ public interface IGeometryService
 {
     bool TryBuildShape(IReadOnlyList<GeoPoint> ring, double minAreaM2, out GeoShape? shape, out string error);
 
+    /// <summary>Извлекает петлю из самопересекающегося маршрута: замкнутая область
+    /// между точкой пересечения следа и текущим концом трека.</summary>
+    bool TryExtractLoop(IReadOnlyList<GeoPoint> track, out GeoShape? loop);
+
     double AreaKm2(IEnumerable<GeoShape> shapes);
 
     List<GeoShape> Union(IEnumerable<GeoShape> shapes);

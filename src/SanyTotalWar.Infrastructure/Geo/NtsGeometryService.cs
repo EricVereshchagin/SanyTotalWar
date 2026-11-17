@@ -78,6 +78,45 @@ public sealed class NtsGeometryService : IGeometryService
         return true;
     }
 
+    /// <summary>Петля из самопересечения маршрута: Polygonizer выделяет
+    /// замкнутую область Netherlands между точками пересечения следа.</summary>
+    public bool TryExtractLoop(IReadOnlyList<GeoPoint> track, out GeoShape? loop)
+    {
+        loop = null;
+        if (track is null || track.Count < 4) return false;
+
+        var proj = ProjOf(null, track);
+        var coords = track.Select(p => new Coordinate(proj.X(p.Lng), proj.Y(p.Lat))).ToArray();
+        Geometry line;
+        try
+        {
+            line = new LineString(coords).Union(new LineString(coords)); // самонодинг
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+
+        var polygonizer = new NetTopologySuite.Operation.Polygonize.Polygonizer();
+        var linework = line is GeometryCollection gc
+            ? gc.Geometries.OfType<Geometry>().ToArray()
+            : new[] { line };
+        polygonizer.Add(linework);
+        var rings = polygonizer.GetPolygons();
+        if (rings.Count == 0) return false;
+
+        Polygon? best = null;
+        foreach (Polygon p in rings)
+        {
+            if (p.IsEmpty) continue;
+            if (best is null || p.Area > best.Area) best = p;
+        }
+        if (best is null || best.Area <= 0) return false;
+
+        loop = new GeoShape(RingPoints(best.ExteriorRing, proj), HolesOf(best, proj));
+        return true;
+    }
+
     public double AreaKm2(IEnumerable<GeoShape> shapes)
     {
         var clean = Union(shapes);

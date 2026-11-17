@@ -54,8 +54,14 @@ public sealed class GameEngine
 
             var meters = GeoMath.TrackLengthM(points);
 
-            var closed = points.Count >= 6 &&
+            // По юзер-кейсам петля — это ЛЮБОЕ самопересечение маршрута;
+            // «конец возле начала» — просто частный случай (участок между
+            // точкой пересечения и текущим концом = захватываемая кольцо).
+            var closedByTouch = points.Count >= 6 &&
                          GeoMath.ApproxDistanceM(points[0], points[^1]) <= LoopClosureM;
+            GeoShape? loopShape = null;
+            var crossedSelf = points.Count >= 4 && _geo.TryExtractLoop(points, out loopShape);
+            var closed = closedByTouch || crossedSelf;
 
             if (player.IsBot && meters > 80)
             {
@@ -97,17 +103,33 @@ public sealed class GameEngine
 
         VisitWarPoints(playerId, points, events);
 
-        // UC-01/04: замкнутая петля или дуга от границ своей земли
+        // UC-01/04: петля (самопересечение или конец у начала) или дуга от границ своей земли
         GeoShape? captureShape = null;
         if (closed)
         {
-            if (!_geo.TryBuildShape(points, MinLoopAreaM2, out var shape, out var error))
+            if (closedByTouch)
             {
-                events.Add(new EngineEvent("warn", $"Петля не принята: {error}"));
+                if (!_geo.TryBuildShape(points, MinLoopAreaM2, out var shape, out var error))
+                {
+                    events.Add(new EngineEvent("warn", $"Петля не принята: {error}"));
+                }
+                else
+                {
+                    captureShape = shape!;
+                }
             }
-            else
+            else if (loopShape is not null)
             {
-                captureShape = shape!;
+                var areaM2 = _geo.AreaKm2(new[] { loopShape }) * 1e6;
+                if (areaM2 < MinLoopAreaM2)
+                {
+                    events.Add(new EngineEvent("warn",
+                        $"Петля не принята: слишком мала ({areaM2:0} м², нужно ≥ {MinLoopAreaM2:0} м²) — обведите участок пошире"));
+                }
+                else
+                {
+                    captureShape = loopShape;
+                }
             }
         }
         else if (TryArcCapture(player, points, meters, events, out var arcShape, out var arcError))
