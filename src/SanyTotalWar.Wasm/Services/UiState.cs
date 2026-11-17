@@ -19,12 +19,17 @@ public sealed class UiState
     public bool MarchMode { get; set; }
     public bool DockOpen { get; set; } = true;
     public string DockTab { get; set; } = "wars";
+
+    /// <summary>Момент последнего отказа (kind=warn): FAB встряхивается вместо текста.</summary>
+    public DateTime LastWarnUtc { get; private set; } = DateTime.MinValue;
+    public bool WarnFlash => (DateTime.UtcNow - LastWarnUtc).TotalMilliseconds < 900;
     private readonly List<ToastItem> _toasts = new();
     public IReadOnlyList<ToastItem> Toasts => _toasts;
 
     public void PushToasts(IEnumerable<EngineEvent> events)
     {
         var now = DateTime.UtcNow;
+        if (events.Any(e => e.Kind == "warn")) LastWarnUtc = now;
         foreach (var e in events.Take(4))
             _toasts.Add(new ToastItem(Guid.NewGuid(), e.Kind, e.Message, now));
         while (_toasts.Count > 6) _toasts.RemoveAt(0);

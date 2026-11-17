@@ -26,14 +26,6 @@
 
     <div class="walk-hud" id="walk-hud" style="display:none"></div>
 
-    <div class="signals">
-        @if (Ui.Toasts.Count > 0)
-        {
-            var t = @Ui.Toasts[^1];
-            <div class="signal @(t.Kind)">@KindRu(t.Kind) · @t.Message</div>
-        }
-    </div>
-
     <BriefingModal />
 </div>
 
@@ -249,17 +241,6 @@
         _vm = BuildSnapshot();
         await InvokeAsync(StateHasChanged);
     }
-
-    private static string KindRu(string kind) => kind switch
-    {
-        "war" => "ВОЙНА",
-        "battle" => "БОЙ",
-        "capture" => "ЗЕМЛИ",
-        "army" => "АРМИЯ",
-        "build" => "ПОСТРОЙКА",
-        "system" => "СИСТЕМА",
-        _ => "СВОДКА",
-    };
 
     public void Dispose()
     {

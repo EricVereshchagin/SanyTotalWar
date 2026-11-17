@@ -3,7 +3,7 @@
 @inject IJSRuntime Js
 
 <div class="fab-col">
-    <button class="fab march @(Ui.MarchMode ? "on" : "")" title="Режим марша: одним пальцем — маршрут, двумя — карта"
+    <button class="fab march @(Ui.MarchMode ? "on" : "") @(Ui.WarnFlash ? "shake" : "")" title="Режим марша: одним пальцем — маршрут, двумя — карта"
             @onclick="ToggleMarch">
         <span>@(Ui.MarchMode ? "◉" : "◈")</span>
         <small>МАРШ</small>

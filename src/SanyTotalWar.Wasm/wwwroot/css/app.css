@@ -509,6 +509,18 @@ html, body {
 }
 .fab small { font-size: 7px; letter-spacing: 0.22em; font-weight: 700; }
 .fab:active { transform: scale(0.93); }
+.fab.shake { animation: fabShake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) 2, warnGlow 0.9s ease both; }
+@keyframes fabShake {
+    10%, 90% { transform: translateX(-1px) rotate(-3deg); }
+    20%, 80% { transform: translateX(2px) rotate(3deg); }
+    30%, 50%, 70% { transform: translateX(-4px) rotate(-5deg); }
+    40%, 60% { transform: translateX(4px) rotate(5deg); }
+}
+@keyframes warnGlow {
+    0% { box-shadow: 0 0 0 rgba(255, 90, 78, 0); border-color: var(--line); }
+    35% { box-shadow: 0 0 22px rgba(255, 90, 78, 0.6); border-color: var(--war); }
+    100% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); border-color: var(--line); }
+}
 .fab.on, .fab.march.on {
     background: linear-gradient(150deg, var(--phos), var(--phos-deep));
     color: var(--phos-ink);
@@ -603,41 +615,6 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
-/* ---------- сигнальная строка (вместо тостов) ---------- */
-
-.signals {
-    position: absolute;
-    top: 78px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 800;
-    pointer-events: none;
-    max-width: calc(100vw - 24px);
-}
-
-.signal {
-    background: rgba(14, 19, 17, 0.9);
-    border: 1px solid var(--line);
-    padding: 7px 14px;
-    font-family: var(--font-data);
-    font-size: 10.5px;
-    letter-spacing: 0.04em;
-    color: var(--ink-dim);
-    border-radius: 99px;
-    animation: signalIn 0.25s ease both, signalOut 0.8s ease 5.5s both;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-.signal.war { color: var(--war-hi); border-color: rgba(255, 90, 78, 0.45); }
-.signal.capture { color: var(--phos); border-color: var(--line-lit); }
-.signal.build { color: var(--ice); }
-.signal.army { color: var(--ok); }
-
-@keyframes signalIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
-@keyframes signalOut { to { opacity: 0; } }
 
 /* ---------- FX на карте: вместо текстовых уведомлений ---------- */
 
@@ -847,8 +824,6 @@ html, body {
     .brand-mark::after { inset: 8px; }
     .clock { font-size: 12px; }
     .speed-btn { padding: 6px 9px; font-size: 10px; }
-
-    .signals { top: 146px; }
 
     /* крупные тач-таргеты */
     .war-actions { display: grid; grid-template-columns: 1fr 1fr; }
