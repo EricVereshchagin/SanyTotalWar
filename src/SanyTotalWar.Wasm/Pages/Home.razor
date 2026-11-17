@@ -88,10 +88,12 @@
 
     private WorldVm BuildSnapshot()
     {
-        var world = Repository.World;
-        lock (world.Gate)
-        {
-            var meId = Ui.MeId;
+            var world = Repository.World;
+            lock (world.Gate)
+            {
+                // свои земли всегда в фосфорном акценте интерфейса
+                const string mineColor = "#c6f24e";
+                var meId = Ui.MeId;
             var me = world.PlayerById(meId)!;
             var terrs = new List<TerrVm>();
             foreach (var t in world.Territories)
@@ -99,7 +101,8 @@
                 var owner = world.PlayerById(t.OwnerId);
                 var activeWars = world.ActiveWars.Count(w => w.ContextTerritoryId == t.Id);
                 terrs.Add(new TerrVm(
-                    t.Id, t.Name, t.OwnerId, owner?.Name ?? "?", owner?.ColorHex ?? "#999",
+                    t.Id, t.Name, t.OwnerId, owner?.Name ?? "?",
+                    t.OwnerId == meId ? mineColor : owner?.ColorHex ?? "#999",
                     t.OwnerId == meId, Engine.AreaKm2(t), Engine.ArmyLimitOf(t), t.Army,
                     t.Buildings.Select(b => BuildingCatalog.All[b.Type]).ToList(),
                     activeWars, t.Id == Ui.SelectedTerritoryId));
@@ -116,7 +119,9 @@
                     var all = w.Sides.Sum(x => x.Mobilized);
                     var (h, sc, c) = ControlPolicy.Score(myPts, possible, s.Mobilized, all);
                     var p = world.PlayerById(s.PlayerId);
-                    sides.Add(new SideVm(p?.Name ?? "?", p?.ColorHex ?? "#999", s.Mobilized, h, sc, c, s.PlayerId == meId));
+                    sides.Add(new SideVm(p?.Name ?? "?",
+                        s.PlayerId == meId ? "#c6f24e" : p?.ColorHex ?? "#999",
+                        s.Mobilized, h, sc, c, s.PlayerId == meId));
                 }
                 var mySide = w.SideOf(meId);
                 var minutesLeft = w.Ended
@@ -165,11 +170,12 @@
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var colors = world.Players.ToDictionary(p => p.Id, p => p.ColorHex);
 
-        var territories = world.Territories.Select(t => new
+        var territoryDtos = world.Territories.Select(t => new
         {
             id = t.Id,
             name = t.Name,
-            color = colors.GetValueOrDefault(t.OwnerId, "#999"),
+            color = t.OwnerId == vm.MyId ? "#c6f24e" : colors.GetValueOrDefault(t.OwnerId, "#999"),
+            mine = t.OwnerId == vm.MyId,
             area = Math.Round(Engine.AreaKm2(t), 4),
             parts = t.Parts
                 .Where(p => p.Exterior.Count >= 3)
@@ -207,7 +213,7 @@
             })
             .ToList();
 
-        var dto = new { version = vm.Version, territories, wars, tracks };
+        var dto = new { version = vm.Version, territories = territoryDtos, wars, tracks };
         return JsonSerializer.Serialize(dto, options);
     }
 

@@ -199,11 +199,12 @@
             for (const part of (t.parts || [])) {
                 if (!part.length || !part[0].length) continue;
                 const latlngs = part.map(r => r.map(p => [p[0], p[1]]));
+                const mine = !!t.mine;
                 const poly = L.polygon(latlngs, {
                     color: t.color,
-                    weight: 2,
+                    weight: mine ? 3.5 : 2,
                     fillColor: t.color,
-                    fillOpacity: 0.30,
+                    fillOpacity: mine ? 0.38 : 0.30,
                 });
                 poly.on('click', () => dotnet.invokeMethodAsync('OnTerritoryClicked', t.id));
                 poly.bindTooltip(t.name, {
