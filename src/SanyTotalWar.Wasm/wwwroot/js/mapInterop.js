@@ -206,7 +206,12 @@
                     fillOpacity: 0.30,
                 });
                 poly.on('click', () => dotnet.invokeMethodAsync('OnTerritoryClicked', t.id));
-                poly.bindTooltip(t.name, { sticky: true, direction: 'top', className: 'war-tip' });
+                poly.bindTooltip(t.name, {
+                    direction: 'top',
+                    className: 'war-tip',
+                    offset: [0, -8],
+                    opacity: 1
+                });
                 gTerritory.addLayer(poly);
             }
 
@@ -325,6 +330,11 @@
             const el = map.getContainer();
             el.style.touchAction = 'none';
             el.addEventListener('contextmenu', e => e.preventDefault());
+
+            // на время зума прячем подсказки — без этого они дёргаются
+            map.on('zoomstart', () => {
+                gTerritory.eachLayer(l => l.closeTooltip());
+            });
 
             // --- мышь: ЛКМ = маршрут, ПКМ = панорама ---
             el.addEventListener('mousedown', e => {
