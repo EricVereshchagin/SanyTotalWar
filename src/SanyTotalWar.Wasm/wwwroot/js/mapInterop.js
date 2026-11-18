@@ -398,8 +398,22 @@
                 weight: 2.5,
                 dashArray: '9 7',
                 fillOpacity: 0.08,
-                interactive: false,
+                interactive: true,
+                bubblingMouseEvents: false,
                 className: 'war-zone'
+            });
+
+            zone.on('click', e => {
+                if (placement) {
+                    tryPlaceAt(e.latlng);
+                    return;
+                }
+
+                dotnet.invokeMethodAsync(
+                    'OnWarClicked',
+                    String(w.contextTerritoryId),
+                    String(w.id)
+                );
             });
             gWars.addLayer(glow);
             gWars.addLayer(zone);

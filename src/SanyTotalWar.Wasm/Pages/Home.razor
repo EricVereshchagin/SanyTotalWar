@@ -21,12 +21,24 @@
 
         <div class="walk-hud" id="walk-hud" style="display:none"></div>
 
-        <div class="dossier-float panel @(Sel is null ? "hidden" : "")" id="dossier-float">
+        <div class="dossier-float panel @(Sel is null ? "hidden" : "")"
+             id="dossier-float">
             <div class="sheet-grab" aria-hidden="true"></div>
+
             @if (Sel is not null)
             {
-                <button class="dossier-close" title="Закрыть досье" @onclick="CloseDossier">×</button>
-                <TerritoryCard Terr="Sel" />
+                <button class="dossier-close"
+                        title="Закрыть досье"
+                        @onclick="CloseDossier">×</button>
+
+                @if (SelectedWar is not null)
+                {
+                    <WarCard War="SelectedWar" />
+                }
+                else if (Sel is not null)
+                {
+                    <TerritoryCard Terr="Sel" />
+                }
             }
         </div>
 
@@ -47,11 +59,17 @@
     private CancellationTokenSource? _cts;
 
     private WorldVm? Vm => _vm;
+    private Guid? SelectedWarId { get; set; }
 
+    private WarVm? SelectedWar =>
+        SelectedWarId is { } id
+            ? _vm?.Wars.FirstOrDefault(w => w.Id == id && !w.Ended)
+            : null;
     private TerrVm? Sel => _vm?.Territories.FirstOrDefault(t => t.Id == Ui.SelectedTerritoryId);
 
     private async Task CloseDossier()
     {
+        SelectedWarId = null;
         Ui.SelectedTerritoryId = null;
         _vm = BuildSnapshot();
         await PushMap();
@@ -156,7 +174,7 @@
                     ? 0
                     : (int)Math.Max(0, (w.LastJoinAtGameTime + WarPolicy.JoinRestart - world.GameNow).TotalMinutes);
                 wars.Add(new WarVm(
-                    w.Id, w.Name, w.ZoneAreaKm2, sides, minutesLeft,
+                    w.Id, w.ContextTerritoryId, w.Name, w.ZoneAreaKm2, sides, minutesLeft,
                     w.Points.Count(p => p.CapturedBy == meId),
                     w.PointsPerCycle * Math.Max(1, w.CyclesGenerated),
                     mySide is not null, mySide?.Mobilized ?? 0,
@@ -230,6 +248,7 @@
         var wars = world.Wars.Where(w => !w.Ended).Select(w => new
         {
             id = w.Id,
+            contextTerritoryId = w.ContextTerritoryId,
             rings = RingsOf(w.ZoneParts.Select(p => p.Exterior)),
             points = w.Points.Select(p => new
             {
@@ -293,8 +312,25 @@
     [JSInvokable]
     public async Task OnTerritoryClicked(string idStr)
     {
+        SelectedWarId = null;
+
         if (Guid.TryParse(idStr, out var id))
             Ui.SelectedTerritoryId = id == Ui.SelectedTerritoryId ? null : id;
+
+        _vm = BuildSnapshot();
+        await PushMap();
+        await InvokeAsync(StateHasChanged);
+    }
+    [JSInvokable]
+    public async Task OnWarClicked(string territoryIdStr, string warIdStr)
+    {
+        if (Guid.TryParse(territoryIdStr, out var territoryId) &&
+            Guid.TryParse(warIdStr, out var warId))
+        {
+            Ui.SelectedTerritoryId = territoryId;
+            SelectedWarId = warId;
+        }
+
         _vm = BuildSnapshot();
         await PushMap();
         await InvokeAsync(StateHasChanged);

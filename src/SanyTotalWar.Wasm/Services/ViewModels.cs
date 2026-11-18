@@ -9,7 +9,7 @@ public sealed record TerrVm(
 public sealed record SideVm(string Name, string Color, int Mob, double H, double S, double C, bool Me);
 
 public sealed record WarVm(
-    Guid Id, string Name, double ZoneKm2, List<SideVm> Sides, int MinutesLeft,
+    Guid Id, Guid TerritoryId, string Name, double ZoneKm2, List<SideVm> Sides, int MinutesLeft,
     int MyPoints, int PointsPossible, bool IAmSide, int MyMob,
     bool Ended, string? WinnerName, string? EndReason);
 
