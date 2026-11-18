@@ -152,24 +152,6 @@
             : m2.toLocaleString('ru-RU') + ' м²';
     }
 
-    // краткое досье — плавающая Blazor-карточка у точки клика
-    let lastClickPx = null;
-
-    function positionDossier() {
-        if (!lastClickPx) return;
-        const card = document.getElementById('dossier-float');
-        if (!card) return;
-        const el = map.getContainer();
-        const rect = el.getBoundingClientRect();
-        let x = lastClickPx.x - rect.left;
-        let y = lastClickPx.y - rect.top;
-        const cardW = 320;
-        x = Math.max(12, Math.min(x + 16, rect.width - cardW - 12));
-        y = Math.max(12, Math.min(y - 40, rect.height - 160));
-        card.style.left = x + 'px';
-        card.style.top = y + 'px';
-    }
-
     // ---- режим установки постройки (клик из досье или drop с карточки) ----
     let placement = null; // { terrId, type }
     let ghostEl = null;
@@ -209,9 +191,6 @@
         dotnet.invokeMethodAsync('OnBuildingDropped', latlng.lat, latlng.lng);
     }
 
-    function closeTerrTip() {
-        lastClickPx = null;
-    }
     function spawnFx(state) {
         const nowTerr = new Map(), nowWars = new Set(), nowCenters = new Map();
 
@@ -322,8 +301,6 @@
                         tryPlaceAt(e.latlng);
                         return;
                     }
-                    lastClickPx = { x: e.originalEvent.clientX, y: e.originalEvent.clientY };
-                    positionDossier();
                     dotnet.invokeMethodAsync('OnTerritoryClicked', entry.data.id);
                 });
                     gTerritory.addLayer(poly);
@@ -628,6 +605,10 @@
             };
             el.addEventListener('touchend', endTouch, { passive: false });
             el.addEventListener('touchcancel', endTouch, { passive: false });
+
+            const fit = () => { if (map) map.invalidateSize(); };
+            fit();
+            requestAnimationFrame(fit);
         },
 
         // включение/выключение режима марша (FAB)

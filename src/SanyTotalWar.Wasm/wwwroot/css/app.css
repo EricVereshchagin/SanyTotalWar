@@ -52,6 +52,15 @@ html, body {
 
 .page, .app-root { position: fixed; inset: 0; }
 
+.app-root { display: flex; flex-direction: row; }
+
+.stage {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+}
+
 #map { position: absolute; inset: 0; background: var(--bg-2); }
 
 /* С„РѕРЅ РїРѕРґ С‚Р°Р№Р»Р°РјРё: Р·Р°Р·РѕСЂС‹ РЅРµРїСЂРѕРіСЂСѓР¶РµРЅРЅС‹С… С‚Р°Р№Р»РѕРІ РІС‹РіР»СЏРґСЏС‚ РєР°Рє С‚С‘РјРЅР°СЏ Р·РµР»РµРЅСЊ
@@ -489,19 +498,32 @@ html, body {
 .dossier-float {
     position: absolute;
     z-index: 820;
-    left: 30px;
-    top: 200px;
-    width: 312px;
-    max-height: min(64vh, 560px);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: auto;
+    max-height: min(62%, 560px);
     overflow-y: auto;
     scrollbar-width: thin;
-    opacity: 0;
-    transform: translateY(8px) scale(0.97);
+    border-radius: 22px 22px 0 0;
+    border-bottom: none;
+    opacity: 1;
+    transform: translateY(105%);
     pointer-events: none;
-    transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
-.dossier-float:not(.hidden) { opacity: 1; transform: none; pointer-events: auto; }
+.dossier-float:not(.hidden) { transform: translateY(0); pointer-events: auto; }
 .dossier-float.hidden { display: block; }
+
+.sheet-grab {
+    width: 36px;
+    height: 4px;
+    border-radius: 99px;
+    background: rgba(215, 245, 225, 0.28);
+    margin: 10px auto 2px;
+}
 
 .dossier-close {
     position: absolute;
@@ -622,7 +644,7 @@ html, body {
 
 /* ---------- FAB (РјРѕР±РёР»СЊРЅС‹Р№) ---------- */
 
-.fab-col { display: none; position: absolute; right: 14px; flex-direction: column; gap: 10px; z-index: 650; }
+.fab-col { display: none; position: static; flex-direction: row; gap: 10px; z-index: 1; }
 
 .fab {
     width: 54px;
@@ -668,18 +690,18 @@ html, body {
 /* ---------- РґРѕРє: РІРѕР№РЅС‹ + РґРѕСЃСЊРµ (РІРµР·РґРµ; РЅР° РјРѕР±РёР»СЊРЅРѕРј вЂ” РїРѕР»РЅС‹Р№ РЅРёР·) ---------- */
 
 .dock {
-    position: absolute;
-    right: 14px;
-    bottom: 14px;
-    width: 372px;
-    z-index: 640;
+    position: relative;
+    z-index: 1;
     background: var(--surface-2);
     border: 1px solid var(--line);
     border-radius: var(--r-panel);
-    box-shadow: var(--shadow-panel);
+    box-shadow: none;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     overflow: hidden;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 /* верхняя полоса — кликабельный аккордеон */
@@ -687,7 +709,7 @@ html, body {
 .dock.collapsed .dock-body { display: none; }
 
 /* FAB-РєРЅРѕРїРєРё Р¶РёРІСѓС‚ РІРЅСѓС‚СЂРё РґРѕРєР° вЂ” СЂР°СЃС‚СѓС‚ РЅР°Рґ РЅРёРј Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё */
-.dock > .fab-col { display: flex; bottom: 100%; margin-bottom: 14px; }
+.dock > .fab-col { display: flex; justify-content: flex-end; margin: 12px 12px 0; }
 
 .dock-tabs { display: flex; gap: 10px; padding: 14px 12px 0; align-items: center; }
 
@@ -715,11 +737,6 @@ html, body {
 .dock-tabs:hover .dock-chev { background: rgba(198, 242, 78, 0.12); border-color: var(--line-lit); }
 .dock-tabs:hover .dock-chev::after { border-color: var(--phos); }
 .dock-chev.up { transform: rotate(180deg); }
-@media (max-width: 1099px) {
-    .dock-chev { position: absolute; top: 0; left: 50%; transform: translate(-50%, 6px); }
-    .dock-chev.up { transform: translate(-50%, 6px) rotate(180deg); }
-    .dock-tabs { padding-top: 26px; }
-}
 
 .dock-tab {
     flex: 1;
@@ -740,15 +757,9 @@ html, body {
 .dock-tab.on { color: var(--phos-ink); background: var(--phos); box-shadow: 0 4px 16px rgba(198, 242, 78, 0.25); }
 .dock-tab.on .n { opacity: 0.7; }
 
-.dock-body { padding: 12px 12px 14px; max-height: 48vh; overflow-y: auto; scrollbar-width: thin; }
+.dock-body { padding: 12px 12px 14px; flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
 
 .pane-hide { display: none; }
-
-/* десктоп: в доке слева снизу — только войны, досье живёт в плавающей карточке */
-.dock-pane.dock-item-dossier { display: none; }
-@media (min-width: 1100px) {
-    .dock-tab.dock-item-dossier { display: none; }
-}
 
 .dock-empty { padding: 10px 6px; font-size: 12px; line-height: 1.8; color: var(--ink-dim); }
 .dock-empty b { color: var(--phos); }
@@ -758,7 +769,7 @@ html, body {
 .walk-hud {
     position: absolute;
     left: 50%;
-    bottom: calc(var(--dock-h, 0px) + 26px);
+    bottom: 18px;
     transform: translateX(-50%);
     z-index: 700;
     background: rgba(12, 17, 14, 0.9);
@@ -1071,24 +1082,9 @@ html, body {
    ============================================================ */
 
 @media (max-width: 1099px) {
-    .top-stats { display: none; }
-    .metric-strip { display: flex; }
-    .dossier-float { display: none; }
-    .fab-col { display: flex; }
+    .metric-strip { display: none; }
 
-    /* на мобильном док — полный низ, как bottom sheet */
-    .dock {
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        border-radius: 22px 22px 0 0;
-        border-bottom: none;
-        box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.5);
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    .hud-top { top: 8px; left: 8px; right: 8px; gap: 7px; }
+    .hud-top { gap: 7px; }
     .top-bar { padding: 10px 12px; gap: 10px; }
     .brand-title { font-size: 11px; }
     .brand-sub { display: none; }
@@ -1118,6 +1114,66 @@ html, body {
     .metric-v { font-size: 14px; }
     .clock-box { gap: 6px; }
 }
+
+.shell {
+    flex: none;
+    width: min(420px, 42vw);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg);
+    border-left: 1px solid var(--line);
+    min-height: 0;
+    overflow: hidden;
+}
+
+.shell .hud-top {
+    position: static;
+    top: auto;
+    left: auto;
+    right: auto;
+    z-index: auto;
+    flex: none;
+    pointer-events: auto;
+    gap: 8px;
+}
+
+.shell .top-bar {
+    position: static;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+}
+
+.shell .top-stats {
+    display: flex;
+    margin-left: 0;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px 14px;
+}
+
+.shell .stat { align-items: flex-start; }
+.shell .clock-box { justify-content: space-between; }
+.shell .metric-strip { display: none; }
+
+.shell .dock {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    flex: 1 1 auto;
+    border-radius: var(--r-panel);
+    border-bottom: 1px solid var(--line);
+    box-shadow: none;
+    padding-bottom: 0;
+}
+
+.shell .dock.collapsed { flex: none; }
 
 /* РїР»Р°РЅС€РµС‚: СЂРµР»СЊСЃС‹ СѓР¶Рµ, РґРѕРєР° РЅРµС‚ */
 

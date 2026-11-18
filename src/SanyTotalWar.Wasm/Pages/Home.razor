@@ -15,24 +15,28 @@
 @implements IDisposable
 
 <div class="app-root">
-    <div id="map"></div>
-    <div class="vignette"></div>
+    <div class="stage">
+        <div id="map"></div>
+        <div class="vignette"></div>
 
-    <TopBar World="Vm" />
+        <div class="walk-hud" id="walk-hud" style="display:none"></div>
 
-    <MobileDock World="Vm" />
+        <div class="dossier-float panel @(Sel is null ? "hidden" : "")" id="dossier-float">
+            <div class="sheet-grab" aria-hidden="true"></div>
+            @if (Sel is not null)
+            {
+                <button class="dossier-close" title="Закрыть досье" @onclick="CloseDossier">×</button>
+                <TerritoryCard Terr="Sel" />
+            }
+        </div>
 
-    <div class="walk-hud" id="walk-hud" style="display:none"></div>
-
-    <div class="dossier-float panel @(Sel is null ? "hidden" : "")" id="dossier-float">
-        @if (Sel is not null)
-        {
-            <button class="dossier-close" title="Закрыть досье" @onclick="CloseDossier">×</button>
-            <TerritoryCard Terr="Sel" />
-        }
+        <BriefingModal />
     </div>
 
-    <BriefingModal />
+    <div class="shell">
+        <TopBar World="Vm" />
+        <MobileDock World="Vm" />
+    </div>
 </div>
 
 @code {
@@ -290,14 +294,7 @@
     public async Task OnTerritoryClicked(string idStr)
     {
         if (Guid.TryParse(idStr, out var id))
-        {
             Ui.SelectedTerritoryId = id == Ui.SelectedTerritoryId ? null : id;
-            if (id != Guid.Empty)
-            {
-                Ui.DockTab = "dossier";
-                Ui.DockOpen = true;
-            }
-        }
         _vm = BuildSnapshot();
         await PushMap();
         await InvokeAsync(StateHasChanged);
