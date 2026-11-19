@@ -257,7 +257,7 @@
     // ---- территории: инкрементальное обновление (без пересоздания под курсором) ----
 
     const terrIndex = new Map(); // id -> { polys, sig, bldMarker, bldKey, data }
-
+    const warIndex = new Map();
     function geoSig(t) {
         const parts = t.parts || [];
         let sig = parts.length + '|';
@@ -377,6 +377,7 @@
         lastSelId = state.sel || null;
 
         gWars.clearLayers();
+        warIndex.clear();
         gPoints.clearLayers();
         gTracks.clearLayers();
 
@@ -402,7 +403,7 @@
                 bubblingMouseEvents: false,
                 className: 'war-zone'
             });
-
+            warIndex.set(String(w.id), zone);
             zone.on('click', e => {
                 if (placement) {
                     tryPlaceAt(e.latlng);
@@ -652,6 +653,39 @@
 
         pushState: function (json) {
             try { render(JSON.parse(json)); } catch (e) { console.error(e); }
+        },
+        centerOnTerritory: function (id) {
+            if (!map) return;
+
+            const entry = terrIndex.get(String(id));
+            if (!entry || !entry.polys.length) return;
+
+            const bounds = L.latLngBounds([]);
+
+            for (const poly of entry.polys) {
+                bounds.extend(poly.getBounds());
+            }
+
+            if (bounds.isValid()) {
+                map.flyToBounds(bounds, {
+                    padding: [35, 35],
+                    maxZoom: 16,
+                    duration: 0.8
+                });
+            }
+        },
+
+        centerOnWar: function (id) {
+            if (!map) return;
+
+            const zone = warIndex.get(String(id));
+            if (!zone) return;
+
+            map.flyToBounds(zone.getBounds(), {
+                padding: [35, 35],
+                maxZoom: 16,
+                duration: 0.8
+            });
         },
 
         flyTo: function (lat, lng, zoom) {
