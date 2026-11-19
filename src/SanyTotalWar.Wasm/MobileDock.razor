@@ -6,49 +6,28 @@
 
     <div class="dock-tabs" title="Свернуть/развернуть" @onclick="() => Ui.DockOpen = !Ui.DockOpen">
         <span class="dock-chev @(Ui.DockOpen ? "" : "up")" aria-hidden="true"></span>
-        <button class="dock-tab @(Ui.DockTab == "wars" ? "on" : "")" @onclick='() => SetTab("wars")' @onclick:stopPropagation="true">
+        <button class="dock-tab on" @onclick='() => SetTab("wars")' @onclick:stopPropagation="true">
             ВОЙНЫ<span class="n">@ActiveWars</span>
-        </button>
-        <button class="dock-tab dock-item-dossier @(Ui.DockTab == "dossier" ? "on" : "")" @onclick='() => SetTab("dossier")' @onclick:stopPropagation="true">
-            ДОСЬЕ
         </button>
     </div>
 
     <div class="dock-body">
-        <div class="dock-pane @(Ui.DockTab == "wars" ? "" : "pane-hide")">
-            @if (ActiveWars > 0)
+        @if (ActiveWars > 0)
+        {
+            foreach (var war in World.Wars.Where(w => !w.Ended).Take(4))
             {
-                foreach (var war in World.Wars.Where(w => !w.Ended).Take(4))
-                {
-                    <WarCard War="war" />
-                }
+                <WarCard War="war" />
             }
-            else
-            {
-                <div class="dock-empty">Нету войн. Замкни петлю поверх чужой земли, чтобы объявить войну (UC-06).</div>
-            }
-        </div>
-
-        <div class="dock-pane dock-item-dossier @(Ui.DockTab == "dossier" ? "" : "pane-hide")">
-            @if (Sel is null)
-            {
-                <div class="dock-empty">
-                    <b>◈ Марш:</b> веди след и пересеки его сам — петля.<br />
-                    <b>◉ Тап по территории</b> — досье и приказы.
-                </div>
-            }
-            else
-            {
-                <TerritoryCard Terr="Sel" />
-            }
-        </div>
+        }
+        else
+        {
+            <div class="dock-empty">Нету войн. Замкни петлю поверх чужой земли, чтобы объявить войну (UC-06).</div>
+        }
     </div>
 </div>
 
 @code {
     [Parameter] public required WorldVm World { get; set; }
-
-    private TerrVm? Sel => World.Territories.FirstOrDefault(t => t.Id == Ui.SelectedTerritoryId);
 
     private int ActiveWars => World.Wars.Count(w => !w.Ended);
 

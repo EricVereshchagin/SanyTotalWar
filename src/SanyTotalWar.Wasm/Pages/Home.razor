@@ -15,24 +15,119 @@
 @implements IDisposable
 
 <div class="app-root">
-    <div id="map"></div>
-    <div class="vignette"></div>
+    <div class="stage">
+        <div id="map"></div>
+        <div class="vignette"></div>
 
-    <TopBar World="Vm" />
+        <div class="walk-hud" id="walk-hud" style="display:none"></div>
+        <div class="stage-bottom-actions">
+        <button class="stage-action"
+                @onclick="@(() => ToggleList("territories"))">
+            <span>⌂</span>
+            Мои территории
+        </button>
 
-    <MobileDock World="Vm" />
+    <button class="stage-action"
+            @onclick="@(() => ToggleList("wars"))">
+        <span>⚔</span>
+        Мои войны
+    </button>
+</div>
 
-    <div class="walk-hud" id="walk-hud" style="display:none"></div>
+@if (OpenPanel == "territories")
+{
+    <div class="stage-list panel">
+        <div class="stage-list-header">
+            <strong>Мои территории</strong>
+            <button @onclick="CloseList">×</button>
+        </div>
 
-    <div class="dossier-float panel @(Sel is null ? "hidden" : "")" id="dossier-float">
-        @if (Sel is not null)
+        @if (MyTerritories.Count == 0)
         {
-            <button class="dossier-close" title="Закрыть досье" @onclick="CloseDossier">×</button>
-            <TerritoryCard Terr="Sel" />
+            <div class="stage-list-empty">У тебя пока нет территорий.</div>
+        }
+        else
+        {
+            @foreach (var terr in MyTerritories)
+            {
+                <button class="stage-list-item"
+                        @key="terr.Id"
+                        @onclick="() => SelectTerritoryFromList(terr.Id)">
+                    <span class="stage-list-item-title">@terr.Name</span>
+                    <span class="stage-list-item-info">
+                        Армия: @terr.Army / @terr.Limit
+                        · @terr.AreaKm2.ToString("N2") км²
+                    </span>
+                    <span class="stage-list-item-info">
+                        Постройки: @terr.Buildings.Count
+                        · Войн: @terr.ActiveWars
+                    </span>
+                </button>
+            }
         }
     </div>
+}
+else if (OpenPanel == "wars")
+{
+    <div class="stage-list panel">
+        <div class="stage-list-header">
+            <strong>Мои войны</strong>
+            <button @onclick="CloseList">×</button>
+        </div>
 
-    <BriefingModal />
+        @if (MyWars.Count == 0)
+        {
+            <div class="stage-list-empty">Ты пока не участвуешь в активных войнах.</div>
+        }
+        else
+        {
+            @foreach (var war in MyWars)
+            {
+                <button class="stage-list-item"
+                        @key="war.Id"
+                        @onclick="() => SelectWarFromList(war.Id)">
+                    <span class="stage-list-item-title">@war.Name</span>
+                    <span class="stage-list-item-info">
+                        Мои очки: @war.MyPoints / @war.PointsPossible
+                        · Мобилизация: @war.MyMob
+                    </span>
+                    <span class="stage-list-item-info">
+                        Осталось: @war.MinutesLeft мин.
+                        · Зона: @war.ZoneKm2.ToString("N2") км²
+                    </span>
+                </button>
+            }
+        }
+    </div>
+}
+        <div class="dossier-float panel @(!IsDossierOpen ? "hidden" : "")"
+             id="dossier-float">
+            <div class="sheet-grab" aria-hidden="true"></div>
+
+            @if (IsDossierOpen)
+            {
+                <button class="dossier-close"
+                        title="Закрыть досье"
+                        @onclick="CloseDossier">×</button>
+
+                @if (SelectedWar is not null)
+                {
+                    <WarCard War="SelectedWar" />
+                }
+                else if (Sel is not null)
+                {
+                    <TerritoryCard Terr="Sel" />
+                }
+            }
+        </div>
+
+        <BriefingModal />
+    </div>
+
+    <div class="shell">
+        <TopBar World="Vm" />
+        <MobileDock World="Vm" />
+    </div>
 </div>
 
 @code {
@@ -41,14 +136,97 @@
     private string? _pendingPayload;
     private long _pushedVersion = -1;
     private CancellationTokenSource? _cts;
-
+    private string? OpenPanel { get; set; }
+    private bool IsDossierOpen => Sel is not null;
     private WorldVm? Vm => _vm;
+    private Guid? SelectedWarId { get; set; }
+
+    private WarVm? SelectedWar =>
+        SelectedWarId is { } id
+            ? _vm?.Wars.FirstOrDefault(w => w.Id == id && !w.Ended)
+            : null;
+
+    private List<TerrVm> MyTerritories =>
+        _vm?.Territories
+            .Where(t => t.My)
+            .OrderBy(t => t.Name)
+            .ToList() ?? [];
+
+    private List<WarVm> MyWars =>
+        _vm?.Wars
+            .Where(w => w.IAmSide && !w.Ended)
+            .ToList() ?? [];
 
     private TerrVm? Sel => _vm?.Territories.FirstOrDefault(t => t.Id == Ui.SelectedTerritoryId);
+
+    private void ToggleList(string name)
+    {
+        OpenPanel = OpenPanel == name ? null : name;
+    }
+
+    private void CloseList()
+    {
+        OpenPanel = null;
+    }
+
+    private async Task SelectTerritoryFromList(Guid id)
+    {
+        Ui.SelectedTerritoryId = id;
+        SelectedWarId = null;
+        OpenPanel = null;
+
+        _vm = BuildSnapshot();
+        await PushMap();
+
+        try
+        {
+            await Js.InvokeVoidAsync("sanyMap.centerOnTerritory", id.ToString());
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SelectWarFromList(Guid id)
+    {
+        var world = Repository.World;
+        Guid? territoryId;
+
+        lock (world.Gate)
+        {
+            territoryId = world.Wars
+                .FirstOrDefault(w => w.Id == id && !w.Ended)
+                ?.ContextTerritoryId;
+        }
+
+        if (territoryId is null)
+            return;
+
+        Ui.SelectedTerritoryId = territoryId;
+        SelectedWarId = id;
+        OpenPanel = null;
+
+        _vm = BuildSnapshot();
+        await PushMap();
+
+        try
+        {
+            await Js.InvokeVoidAsync("sanyMap.centerOnWar", id.ToString());
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
 
     private async Task CloseDossier()
     {
         Ui.SelectedTerritoryId = null;
+        SelectedWarId = null;
+
         _vm = BuildSnapshot();
         await PushMap();
         await InvokeAsync(StateHasChanged);
@@ -58,6 +236,8 @@
     public async Task OnMapClicked()
     {
         Ui.SelectedTerritoryId = null;
+        SelectedWarId = null;
+
         _vm = BuildSnapshot();
         await PushMap();
         await InvokeAsync(StateHasChanged);
@@ -106,19 +286,25 @@
                 if (_vm is not null && _vm.Version != _pushedVersion && _pendingPayload is not null)
                     await PushMap();
             }
-            catch (OperationCanceledException) { break; }
-            catch (Exception) { /* keep the pulse alive */ }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception)
+            {
+                /* keep the pulse alive */
+            }
         }
     }
 
     private WorldVm BuildSnapshot()
     {
-            var world = Repository.World;
-            lock (world.Gate)
-            {
-                // свои земли всегда в фосфорном акценте интерфейса
-                const string mineColor = "#c6f24e";
-                var meId = Ui.MeId;
+        var world = Repository.World;
+        lock (world.Gate)
+        {
+            // свои земли всегда в фосфорном акценте интерфейса
+            const string mineColor = "#c6f24e";
+            var meId = Ui.MeId;
             var me = world.PlayerById(meId)!;
             var terrs = new List<TerrVm>();
             foreach (var t in world.Territories)
@@ -130,7 +316,8 @@
                     t.OwnerId == meId ? mineColor : owner?.ColorHex ?? "#999",
                     t.OwnerId == meId, Engine.AreaKm2(t), Engine.ArmyLimitOf(t), t.Army,
                     t.Buildings.Select(b => BuildingCatalog.All[b.Type]).ToList(),
-                    activeWars, t.Id == Ui.SelectedTerritoryId));            }
+                    activeWars, t.Id == Ui.SelectedTerritoryId));
+            }
 
             var wars = new List<WarVm>();
             foreach (var w in world.Wars.OrderByDescending(w => !w.Ended).ThenByDescending(w => w.StartedAtGameTime))
@@ -147,12 +334,13 @@
                         s.PlayerId == meId ? "#c6f24e" : p?.ColorHex ?? "#999",
                         s.Mobilized, h, sc, c, s.PlayerId == meId));
                 }
+
                 var mySide = w.SideOf(meId);
                 var minutesLeft = w.Ended
                     ? 0
                     : (int)Math.Max(0, (w.LastJoinAtGameTime + WarPolicy.JoinRestart - world.GameNow).TotalMinutes);
                 wars.Add(new WarVm(
-                    w.Id, w.Name, w.ZoneAreaKm2, sides, minutesLeft,
+                    w.Id, w.ContextTerritoryId, w.Name, w.ZoneAreaKm2, sides, minutesLeft,
                     w.Points.Count(p => p.CapturedBy == meId),
                     w.PointsPerCycle * Math.Max(1, w.CyclesGenerated),
                     mySide is not null, mySide?.Mobilized ?? 0,
@@ -185,8 +373,13 @@
         {
             await Js.InvokeVoidAsync("sanyMap.pushState", payload);
         }
-        catch (JSDisconnectedException) { }
-        catch (Exception) { /* retry on the next pulse */ }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (Exception)
+        {
+            /* retry on the next pulse */
+        }
     }
 
     private string BuildPayloadCore(World world, WorldVm vm)
@@ -226,6 +419,7 @@
         var wars = world.Wars.Where(w => !w.Ended).Select(w => new
         {
             id = w.Id,
+            contextTerritoryId = w.ContextTerritoryId,
             rings = RingsOf(w.ZoneParts.Select(p => p.Exterior)),
             points = w.Points.Select(p => new
             {
@@ -271,7 +465,14 @@
     {
         if (Ui.PendingPlacement is not { } pending) return;
         Ui.PendingPlacement = null;
-        try { await Js.InvokeVoidAsync("sanyMap.setPlacement", "", "", false); } catch (JSDisconnectedException) { }
+        try
+        {
+            await Js.InvokeVoidAsync("sanyMap.setPlacement", "", "", false);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
         var events = Engine.Build(Ui.MeId, pending.TerrId, pending.Type, new GeoPoint(lat, lng));
         Ui.PushToasts(events);
         _vm = BuildSnapshot();
@@ -289,15 +490,26 @@
     [JSInvokable]
     public async Task OnTerritoryClicked(string idStr)
     {
+        SelectedWarId = null;
+
         if (Guid.TryParse(idStr, out var id))
-        {
             Ui.SelectedTerritoryId = id == Ui.SelectedTerritoryId ? null : id;
-            if (id != Guid.Empty)
-            {
-                Ui.DockTab = "dossier";
-                Ui.DockOpen = true;
-            }
+
+        _vm = BuildSnapshot();
+        await PushMap();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task OnWarClicked(string territoryIdStr, string warIdStr)
+    {
+        if (Guid.TryParse(territoryIdStr, out var territoryId) &&
+            Guid.TryParse(warIdStr, out var warId))
+        {
+            Ui.SelectedTerritoryId = territoryId;
+            SelectedWarId = warId;
         }
+
         _vm = BuildSnapshot();
         await PushMap();
         await InvokeAsync(StateHasChanged);
@@ -308,4 +520,5 @@
         _cts?.Cancel();
         _self?.Dispose();
     }
+
 }
