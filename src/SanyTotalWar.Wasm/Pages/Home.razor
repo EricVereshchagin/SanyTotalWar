@@ -21,85 +21,98 @@
 
         <div class="walk-hud" id="walk-hud" style="display:none"></div>
         <div class="stage-bottom-actions">
-        <button class="stage-action"
-                @onclick="@(() => ToggleList("territories"))">
-            <span>⌂</span>
-            Мои территории
-        </button>
+            <button class="stage-action"
+                    @onclick="@(() => ToggleList("territories"))">
+                <span>⌂</span>
+                Мои территории
+            </button>
 
-    <button class="stage-action"
-            @onclick="@(() => ToggleList("wars"))">
-        <span>⚔</span>
-        Мои войны
-    </button>
-</div>
-
-@if (OpenPanel == "territories")
-{
-    <div class="stage-list panel">
-        <div class="stage-list-header">
-            <strong>Мои территории</strong>
-            <button @onclick="CloseList">×</button>
+            <button class="stage-action"
+                    @onclick="@(() => ToggleList("wars"))">
+                <span>⚔</span>
+                Мои войны
+            </button>
         </div>
 
-        @if (MyTerritories.Count == 0)
+        @if (OpenPanel == "territories")
         {
-            <div class="stage-list-empty">У тебя пока нет территорий.</div>
-        }
-        else
-        {
-            @foreach (var terr in MyTerritories)
-            {
-                <button class="stage-list-item"
-                        @key="terr.Id"
-                        @onclick="() => SelectTerritoryFromList(terr.Id)">
-                    <span class="stage-list-item-title">@terr.Name</span>
-                    <span class="stage-list-item-info">
-                        Армия: @terr.Army / @terr.Limit
-                        · @terr.AreaKm2.ToString("N2") км²
-                    </span>
-                    <span class="stage-list-item-info">
-                        Постройки: @terr.Buildings.Count
-                        · Войн: @terr.ActiveWars
-                    </span>
-                </button>
-            }
-        }
-    </div>
-}
-else if (OpenPanel == "wars")
-{
-    <div class="stage-list panel">
-        <div class="stage-list-header">
-            <strong>Мои войны</strong>
-            <button @onclick="CloseList">×</button>
-        </div>
+            <div class="dossier-float panel stage-list">
+                <div class="sheet-grab" aria-hidden="true"></div>
 
-        @if (MyWars.Count == 0)
-        {
-            <div class="stage-list-empty">Ты пока не участвуешь в активных войнах.</div>
+                <div class="stage-list-header">
+                    <strong>Мои территории</strong>
+                    <button class="dossier-close" title="Закрыть список"
+                            @onclick="CloseList">×
+                    </button>
+                </div>
+
+                @if (MyTerritories.Count == 0)
+                {
+                    <div class="stage-list-empty">
+                        У тебя пока нет территорий.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var terr in MyTerritories)
+                    {
+                        <div @key="terr.Id" class="stage-list-item">
+                            <span class="stage-list-item-title">@terr.Name</span>
+                            <span class="stage-list-item-info">
+                                Армия: @terr.Army / @terr.Limit
+                                · @terr.AreaKm2.ToString("N2") км²
+                            </span>
+                            <span class="stage-list-item-info">
+                                Постройки: @terr.Buildings.Count
+                                · Войн: @terr.ActiveWars
+                            </span>
+                            <button type="button"
+                                    class="stage-map-button"
+                                    @onclick="() => SelectTerritoryFromList(terr.Id)">
+                                <span>На карте</span>
+                                <span aria-hidden="true">↗</span>
+                            </button>
+                        </div>
+                    }
+                }
+            </div>
         }
-        else
+        else if (OpenPanel == "wars")
         {
-            @foreach (var war in MyWars)
-            {
-                <button class="stage-list-item"
-                        @key="war.Id"
-                        @onclick="() => SelectWarFromList(war.Id)">
-                    <span class="stage-list-item-title">@war.Name</span>
-                    <span class="stage-list-item-info">
-                        Мои очки: @war.MyPoints / @war.PointsPossible
-                        · Мобилизация: @war.MyMob
-                    </span>
-                    <span class="stage-list-item-info">
-                        Осталось: @war.MinutesLeft мин.
-                        · Зона: @war.ZoneKm2.ToString("N2") км²
-                    </span>
-                </button>
-            }
+            <div class="dossier-float panel stage-list stage-war-list">
+                <div class="sheet-grab" aria-hidden="true"></div>
+
+                <div class="stage-list-header">
+                    <strong>Мои войны</strong>
+                    <button class="dossier-close" title="Закрыть список"
+                            @onclick="CloseList">×
+                    </button>
+                </div>
+
+                @if (MyWars.Count == 0)
+                {
+                    <div class="stage-list-empty">
+                        Ты пока не участвуешь в активных войнах.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var war in MyWars)
+                    {
+                        <div @key="war.Id" class="stage-war-entry">
+                            <WarCard War="war"/>
+
+                            <button type="button"
+                                    class="stage-map-button"
+                                    @onclick="() => SelectWarFromList(war.Id)">
+                                <span>На карте</span>
+                                <span aria-hidden="true">↗</span>
+                            </button>
+                        </div>
+                    }
+                }
+            </div>
         }
-    </div>
-}
         <div class="dossier-float panel @(!IsDossierOpen ? "hidden" : "")"
              id="dossier-float">
             <div class="sheet-grab" aria-hidden="true"></div>
@@ -108,25 +121,26 @@ else if (OpenPanel == "wars")
             {
                 <button class="dossier-close"
                         title="Закрыть досье"
-                        @onclick="CloseDossier">×</button>
+                        @onclick="CloseDossier">×
+                </button>
 
                 @if (SelectedWar is not null)
                 {
-                    <WarCard War="SelectedWar" />
+                    <WarCard War="SelectedWar"/>
                 }
                 else if (Sel is not null)
                 {
-                    <TerritoryCard Terr="Sel" />
+                    <TerritoryCard Terr="Sel"/>
                 }
             }
         </div>
 
-        <BriefingModal />
+        <BriefingModal/>
     </div>
 
     <div class="shell">
-        <TopBar World="Vm" />
-        <MobileDock World="Vm" />
+        <TopBar World="Vm"/>
+        <MobileDock World="Vm"/>
     </div>
 </div>
 
